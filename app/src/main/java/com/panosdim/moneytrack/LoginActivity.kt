@@ -2,6 +2,8 @@ package com.panosdim.moneytrack
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -131,6 +133,7 @@ class LoginActivity : AppCompatActivity() {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
+    @SuppressLint("StaticFieldLeak")
     inner class UserLoginTask internal constructor(private val mUsername: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
 
         override fun doInBackground(vararg params: Void): Boolean? {
@@ -161,7 +164,8 @@ class LoginActivity : AppCompatActivity() {
             showProgress(false)
 
             if (success!!) {
-                finish()
+                val intent = Intent(applicationContext, MainActivity::class.java)
+                startActivity(intent)
             } else {
                 mPasswordView!!.error = getString(R.string.error_incorrect_password)
                 mPasswordView!!.requestFocus()
