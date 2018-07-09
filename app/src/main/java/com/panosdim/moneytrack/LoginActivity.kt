@@ -147,7 +147,7 @@ class LoginActivity : AppCompatActivity() {
             }
 
             val wsh = WebServiceHandler()
-            val result = wsh.performPostCall("http://moneytrack.cc.nf/php/login.php", jsonParam)
+            val result = wsh.performPostCall("php/login.php", jsonParam)
             try {
                 val jres = JSONObject(result)
                 return jres.getString("status") != "error"
