@@ -13,6 +13,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -102,7 +103,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun isPasswordValid(password: String): Boolean {
-        //TODO: Replace this with your own logic
         return password.length > 4
     }
 
@@ -149,14 +149,13 @@ class LoginActivity : AppCompatActivity() {
             val wsh = WebServiceHandler()
             val result = wsh.performPostCall("php/login.php", jsonParam)
             try {
-                val jres = JSONObject(result)
-                return jres.getString("status") != "error"
+                val resp = JSONObject(result)
+                return resp.getString("status") != "error"
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
 
-            // TODO: register the new account here.
-            return true
+            return false
         }
 
         override fun onPostExecute(success: Boolean?) {
@@ -167,8 +166,8 @@ class LoginActivity : AppCompatActivity() {
                 val intent = Intent(applicationContext, MainActivity::class.java)
                 startActivity(intent)
             } else {
-                mPasswordView!!.error = getString(R.string.error_incorrect_password)
-                mPasswordView!!.requestFocus()
+                Toast.makeText(applicationContext, "Login Failed. Please check username and password!",
+                        Toast.LENGTH_LONG).show()
             }
         }
 

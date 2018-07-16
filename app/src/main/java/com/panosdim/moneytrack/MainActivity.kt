@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -73,10 +72,8 @@ class MainActivity : AppCompatActivity() {
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
-            Log.d("MT_APP", "START")
-            val mAuthTask = GetJsonDataTask("php/get_income.php")
-            mAuthTask.execute(null as Void?)
-            Log.d("MT_APP", "FINISH")
+            val mJsonTask = GetJsonDataTask("php/get_income.php")
+            mJsonTask.execute(null as Void?)
 
             when (arguments?.getInt(ARG_SECTION_NUMBER)) {
                 1 -> return inflater.inflate(R.layout.fragment_income, container, false)
@@ -111,8 +108,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun doInBackground(vararg params: Void): String? {
                 val wsh = WebServiceHandler()
-                val result = wsh.performGetCall(url)
-                return result
+                return wsh.performGetCall(url)
             }
         }
     }
