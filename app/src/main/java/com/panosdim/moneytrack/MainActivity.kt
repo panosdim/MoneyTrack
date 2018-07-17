@@ -1,6 +1,5 @@
 package com.panosdim.moneytrack
 
-import android.annotation.SuppressLint
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -9,10 +8,13 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
+import java.lang.ref.WeakReference
 
 class MainActivity : AppCompatActivity() {
 
@@ -69,14 +71,14 @@ class MainActivity : AppCompatActivity() {
      * A placeholder fragment containing a simple view.
      */
     class PlaceholderFragment : Fragment() {
-
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
-            val mJsonTask = GetJsonDataTask("php/get_income.php")
-            mJsonTask.execute(null as Void?)
+
+            val incomeView = inflater.inflate(R.layout.fragment_income, container, false)
+            GetJsonDataTask(incomeView).execute("php/get_income.php")
 
             when (arguments?.getInt(ARG_SECTION_NUMBER)) {
-                1 -> return inflater.inflate(R.layout.fragment_income, container, false)
+                1 -> return incomeView
                 2 -> return inflater.inflate(R.layout.fragment_expenses, container, false)
                 3 -> return inflater.inflate(R.layout.fragment_categories, container, false)
                 else -> return inflater.inflate(R.layout.fragment_income, container, false)
@@ -101,14 +103,20 @@ class MainActivity : AppCompatActivity() {
                 fragment.arguments = args
                 return fragment
             }
-        }
 
-        @SuppressLint("StaticFieldLeak")
-        inner class GetJsonDataTask internal constructor(private val url: String) : AsyncTask<Void, Void, String>() {
+            class GetJsonDataTask internal constructor(fragView: View): AsyncTask<String, Void, String>() {
+                private val view: WeakReference<View> = WeakReference(fragView)
 
-            override fun doInBackground(vararg params: Void): String? {
-                val wsh = WebServiceHandler()
-                return wsh.performGetCall(url)
+                override fun doInBackground(vararg params: String): String? {
+                    val wsh = WebServiceHandler()
+                    return wsh.performGetCall(params[0])
+                }
+
+                override fun onPostExecute(success: String?) {
+                    Log.d("MT_APP", success)
+                    val income = view.get()!!.findViewById(R.id.section_label) as TextView?
+                    income!!.text = success
+                }
             }
         }
     }
