@@ -2,7 +2,6 @@ package com.panosdim.moneytrack
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
@@ -16,16 +15,14 @@ import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONException
 import org.json.JSONObject
+import java.lang.ref.WeakReference
+
+const val EXTRA_MESSAGE = "com.panosdim.moneytrack.MESSAGE"
 
 /**
  * A login screen that offers login via username/password.
  */
 class LoginActivity : AppCompatActivity() {
-
-    /**
-     * Keep track of the login task to ensure we can cancel it if requested.
-     */
-    private var mAuthTask: UserLoginTask? = null
 
     // UI references.
     private var mUsernameView: EditText? = null
@@ -36,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
         // Set up the login form.
         mUsernameView = findViewById(R.id.username) as EditText
         mPasswordView = findViewById(R.id.password) as EditText
@@ -52,6 +50,18 @@ class LoginActivity : AppCompatActivity() {
 
         mLoginFormView = findViewById(R.id.login_form)
         mProgressView = findViewById(R.id.login_progress)
+
+        // Check if we return from logout button
+        // Get the Intent that started this activity and extract the string
+        val loggedOut = intent.getBooleanExtra(EXTRA_MESSAGE, false)
+        if (!loggedOut) {
+            // Show a progress spinner, and kick off a background task to
+            // check for active session.
+            Toast.makeText(this, "Checking for active session!",
+                    Toast.LENGTH_LONG).show()
+            showProgress(true)
+            CheckSessionTask(this).execute()
+        }
     }
 
     /**
@@ -60,10 +70,6 @@ class LoginActivity : AppCompatActivity() {
      * errors are presented and no actual login attempt is made.
      */
     private fun attemptLogin() {
-        if (mAuthTask != null) {
-            return
-        }
-
         // Reset errors.
         mUsernameView!!.error = null
         mPasswordView!!.error = null
@@ -97,8 +103,7 @@ class LoginActivity : AppCompatActivity() {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true)
-            mAuthTask = UserLoginTask(username, password)
-            mAuthTask!!.execute(null as Void?)
+            UserLoginTask(this).execute(username, password)
         }
     }
 
@@ -129,51 +134,76 @@ class LoginActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    @SuppressLint("StaticFieldLeak")
-    inner class UserLoginTask internal constructor(private val mUsername: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
+    companion object {
+        class CheckSessionTask internal constructor(context: LoginActivity) : AsyncTask<Void, Void, String>() {
+            private val context: WeakReference<LoginActivity> = WeakReference(context)
 
-        override fun doInBackground(vararg params: Void): Boolean? {
-            // attempt authentication against a network service.
-            val jsonParam = JSONObject()
-            try {
-                jsonParam.put("username", mUsername)
-                jsonParam.put("password", mPassword)
-            } catch (e: JSONException) {
-                e.printStackTrace()
+            override fun doInBackground(vararg params: Void): String? {
+                val wsh = WebServiceHandler()
+                return wsh.performGetCall("php/session.php")
             }
 
-            val wsh = WebServiceHandler()
-            val result = wsh.performPostCall("php/login.php", jsonParam)
-            try {
-                val resp = JSONObject(result)
-                return resp.getString("status") != "error"
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-
-            return false
-        }
-
-        override fun onPostExecute(success: Boolean?) {
-            mAuthTask = null
-            showProgress(false)
-
-            if (success!!) {
-                val intent = Intent(applicationContext, MainActivity::class.java)
-                startActivity(intent)
-            } else {
-                Toast.makeText(applicationContext, "Login Failed. Please check username and password!",
-                        Toast.LENGTH_LONG).show()
+            override fun onPostExecute(result: String?) {
+                try {
+                    val resp = JSONObject(result)
+                    if (resp.getBoolean("loggedIn")) {
+                        val intent = Intent(context.get(), MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.get()!!.startActivity(intent)
+                    } else {
+                        context.get()!!.showProgress(false);
+                    }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
             }
         }
 
-        override fun onCancelled() {
-            mAuthTask = null
-            showProgress(false)
+        /**
+         * Represents an asynchronous login/registration task used to authenticate
+         * the user.
+         */
+        class UserLoginTask internal constructor(context: LoginActivity) : AsyncTask<String, Void, Boolean>() {
+            private val context: WeakReference<LoginActivity> = WeakReference(context)
+
+            override fun doInBackground(vararg params: String): Boolean? {
+                // attempt authentication against a network service.
+                val jsonParam = JSONObject()
+                try {
+                    jsonParam.put("username", params[0])
+                    jsonParam.put("password", params[1])
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+                val wsh = WebServiceHandler()
+                val result = wsh.performPostCall("php/login.php", jsonParam)
+                try {
+                    val resp = JSONObject(result)
+                    return resp.getString("status") != "error"
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+
+                return false
+            }
+
+            override fun onPostExecute(success: Boolean?) {
+                context.get()!!.showProgress(false)
+
+                if (success!!) {
+                    val intent = Intent(context.get(), MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    context.get()!!.startActivity(intent)
+                } else {
+                    Toast.makeText(context.get(), "Login Failed. Please check username and password!",
+                            Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onCancelled() {
+                context.get()!!.showProgress(false)
+            }
         }
     }
 }

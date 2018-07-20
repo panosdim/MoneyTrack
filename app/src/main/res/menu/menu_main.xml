@@ -2,9 +2,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.panosdim.moneytrack.MainActivity">
+
+    <!-- "Mark Favorite", should appear as action button if possible -->
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
+        android:id="@+id/action_logout"
+        android:icon="@drawable/ic_action_exit"
+        android:title="@string/logout"
+        app:showAsAction="ifRoom" />
+
 </menu>
