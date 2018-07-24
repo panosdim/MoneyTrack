@@ -11,10 +11,15 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
 import android.view.*
-import android.widget.TextView
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.ref.WeakReference
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -156,8 +161,29 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onPostExecute(success: String?) {
-                    val income = view.get()!!.findViewById(R.id.section_label) as TextView?
-                    income!!.text = success
+                    // Convert JSON response to List<Income>
+                    val data: MutableList<Income> = mutableListOf<Income>()
+                    val resp = JSONArray(success)
+                    for (inc in 0 until resp.length()) {
+                        val item = resp.getJSONObject(inc)
+                        data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                    }
+
+
+                    // set up the RecyclerView
+                    val recyclerView = view.get()!!.findViewById(R.id.rvIncome) as RecyclerView?
+                    recyclerView!!.layoutManager = LinearLayoutManager(view.get()!!.context)
+                    recyclerView.adapter = IncomeAdapter(data) { incItem : Income -> incomeItemClicked(incItem) }
+
+                }
+
+                private fun incomeItemClicked(incItem : Income) {
+                    Toast.makeText(view.get()!!.context, "Clicked: ${incItem.id}", Toast.LENGTH_LONG).show()
+
+                    // Launch second activity, pass part ID as string parameter
+//            val showDetailActivityIntent = Intent(this, PartDetailActivity::class.java)
+//            showDetailActivityIntent.putExtra(Intent.EXTRA_TEXT, incItem.id.toString())
+//            startActivity(showDetailActivityIntent)
                 }
             }
         }
