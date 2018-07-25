@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.view.View
@@ -29,6 +30,7 @@ class LoginActivity : AppCompatActivity() {
     private var mPasswordView: EditText? = null
     private var mProgressView: View? = null
     private var mLoginFormView: View? = null
+    private var snackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,8 +59,8 @@ class LoginActivity : AppCompatActivity() {
         if (!loggedOut) {
             // Show a progress spinner, and kick off a background task to
             // check for active session.
-            Toast.makeText(this, "Checking for active session!",
-                    Toast.LENGTH_LONG).show()
+            snackbar = Snackbar.make(findViewById(android.R.id.content), "Checking for active session!", Snackbar.LENGTH_LONG)
+            snackbar!!.show()
             showProgress(true)
             CheckSessionTask(this).execute()
         }
@@ -149,9 +151,11 @@ class LoginActivity : AppCompatActivity() {
                     if (resp.getBoolean("loggedIn")) {
                         val intent = Intent(context.get(), MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.get()!!.snackbar!!.dismiss()
                         context.get()!!.startActivity(intent)
                     } else {
                         context.get()!!.showProgress(false);
+                        context.get()!!.snackbar!!.dismiss()
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()

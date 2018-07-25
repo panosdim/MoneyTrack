@@ -10,15 +10,14 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.RecyclerView.LayoutManager
 import android.view.*
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
-import java.lang.ref.WeakReference
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.util.Log
 import org.json.JSONArray
-import org.json.JSONObject
+import java.lang.ref.WeakReference
 
 
 class MainActivity : AppCompatActivity() {
@@ -80,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        class LogoutTask internal constructor(context: Context): AsyncTask<Void, Void, String>() {
+        class LogoutTask internal constructor(context: Context) : AsyncTask<Void, Void, String>() {
             private val context: WeakReference<Context> = WeakReference(context)
 
             override fun doInBackground(vararg params: Void): String? {
@@ -123,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                                   savedInstanceState: Bundle?): View? {
 
             val incomeView = inflater.inflate(R.layout.fragment_income, container, false)
-            GetJsonDataTask(incomeView).execute("php/get_income.php")
+            GetIncomeDataTask(incomeView).execute()
 
             when (arguments?.getInt(ARG_SECTION_NUMBER)) {
                 1 -> return incomeView
@@ -152,32 +151,47 @@ class MainActivity : AppCompatActivity() {
                 return fragment
             }
 
-            class GetJsonDataTask internal constructor(fragView: View): AsyncTask<String, Void, String>() {
+            class GetIncomeDataTask internal constructor(fragView: View) : AsyncTask<Void, Void, String>() {
                 private val view: WeakReference<View> = WeakReference(fragView)
+                private lateinit var viewAdapter: RecyclerView.Adapter<*>
+                private lateinit var viewManager: LayoutManager
+                private val data: MutableList<Income> = mutableListOf<Income>()
 
-                override fun doInBackground(vararg params: String): String? {
-                    val wsh = WebServiceHandler()
-                    return wsh.performGetCall(params[0])
+                override fun doInBackground(vararg params: Void): String? {
+                    if (data.size == 0) {
+                        val wsh = WebServiceHandler()
+                        return wsh.performGetCall("php/get_income.php")
+                    } else {
+                        return ""
+                    }
                 }
 
                 override fun onPostExecute(success: String?) {
-                    // Convert JSON response to List<Income>
-                    val data: MutableList<Income> = mutableListOf<Income>()
-                    val resp = JSONArray(success)
-                    for (inc in 0 until resp.length()) {
-                        val item = resp.getJSONObject(inc)
-                        data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                    if (!success!!.isEmpty()) {
+                        // Convert JSON response to List<Income>
+                        val resp = JSONArray(success)
+                        for (inc in 0 until resp.length()) {
+                            val item = resp.getJSONObject(inc)
+                            data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                        }
+
+                        viewManager = LinearLayoutManager(view.get()!!.context)
+                        viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
+
+                        val recyclerView = view.get()!!.findViewById(R.id.rvIncome) as RecyclerView
+                        // use this setting to improve performance if you know that changes
+                        // in content do not change the layout size of the RecyclerView
+                        recyclerView.setHasFixedSize(true)
+
+                        // use a linear layout manager
+                        recyclerView.layoutManager = viewManager
+
+                        // specify an viewAdapter (see also next example)
+                        recyclerView.adapter = viewAdapter
                     }
-
-
-                    // set up the RecyclerView
-                    val recyclerView = view.get()!!.findViewById(R.id.rvIncome) as RecyclerView?
-                    recyclerView!!.layoutManager = LinearLayoutManager(view.get()!!.context)
-                    recyclerView.adapter = IncomeAdapter(data) { incItem : Income -> incomeItemClicked(incItem) }
-
                 }
 
-                private fun incomeItemClicked(incItem : Income) {
+                private fun incomeItemClicked(incItem: Income) {
                     Toast.makeText(view.get()!!.context, "Clicked: ${incItem.id}", Toast.LENGTH_LONG).show()
 
                     // Launch second activity, pass part ID as string parameter
