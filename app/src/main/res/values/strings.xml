@@ -19,4 +19,5 @@
     <string name="date">Date</string>
     <string name="salary">Salary</string>
     <string name="comment">Comment</string>
+    <string name="title_activity_income_details">Income Details</string>
 </resources>

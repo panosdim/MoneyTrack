@@ -15,6 +15,8 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.LayoutManager
 import android.view.*
 import android.widget.Toast
+import com.panosdim.moneytrack.network.GetJsonData
+import com.panosdim.moneytrack.network.WebServiceHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONArray
 import java.lang.ref.WeakReference
@@ -90,7 +92,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPostExecute(success: String?) {
                 val intent = Intent(context.get(), LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                intent.putExtra(EXTRA_MESSAGE, true)
+                intent.putExtra(LOGGEDOUT_MESSAGE, true)
                 context.get()!!.startActivity(intent)
             }
         }
@@ -118,18 +120,74 @@ class MainActivity : AppCompatActivity() {
      * A placeholder fragment containing a simple view.
      */
     class PlaceholderFragment : Fragment() {
+        private var mView: View? = null
+        private val data: MutableList<Income> = mutableListOf<Income>()
+        private lateinit var viewAdapter: RecyclerView.Adapter<*>
+        private lateinit var viewManager: LayoutManager
+
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
 
-            val incomeView = inflater.inflate(R.layout.fragment_income, container, false)
-            GetIncomeDataTask(incomeView).execute()
+            mView = inflater.inflate(R.layout.fragment_income, container, false)
+            if (data.size == 0) {
+                GetJsonData(::getIncomeDataTask).execute("php/get_income.php")
+            } else {
+                viewManager = LinearLayoutManager(mView!!.context)
+                viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
+
+                val recyclerView = mView!!.findViewById(R.id.rvIncome) as RecyclerView
+                // use this setting to improve performance if you know that changes
+                // in content do not change the layout size of the RecyclerView
+                recyclerView.setHasFixedSize(true)
+
+                // use a linear layout manager
+                recyclerView.layoutManager = viewManager
+
+                // specify an viewAdapter (see also next example)
+                recyclerView.adapter = viewAdapter
+            }
 
             when (arguments?.getInt(ARG_SECTION_NUMBER)) {
-                1 -> return incomeView
+                1 -> return mView
                 2 -> return inflater.inflate(R.layout.fragment_expenses, container, false)
                 3 -> return inflater.inflate(R.layout.fragment_categories, container, false)
                 else -> return inflater.inflate(R.layout.fragment_income, container, false)
             }
+        }
+
+        private fun getIncomeDataTask(result: String) {
+            if (!result.isEmpty()) {
+                // Convert JSON response to List<Income>
+                val resp = JSONArray(result)
+                for (inc in 0 until resp.length()) {
+                    val item = resp.getJSONObject(inc)
+                    data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                }
+
+                viewManager = LinearLayoutManager(mView!!.context)
+                viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
+
+                val recyclerView = mView!!.findViewById(R.id.rvIncome) as RecyclerView
+                // use this setting to improve performance if you know that changes
+                // in content do not change the layout size of the RecyclerView
+                recyclerView.setHasFixedSize(true)
+
+                // use a linear layout manager
+                recyclerView.layoutManager = viewManager
+
+                // specify an viewAdapter (see also next example)
+                recyclerView.adapter = viewAdapter
+            }
+        }
+
+        private fun incomeItemClicked(incItem: Income) {
+            Toast.makeText(mView!!.context, "Clicked: ${incItem.id}", Toast.LENGTH_LONG).show()
+
+            val intent = Intent(mView!!.context, IncomeDetails::class.java)
+            val bundle = Bundle()
+            bundle.putParcelable(INCOME_MESSAGE, incItem)
+            intent.putExtras(bundle)
+            mView!!.context.startActivity(intent)
         }
 
         companion object {
@@ -149,56 +207,6 @@ class MainActivity : AppCompatActivity() {
                 args.putInt(ARG_SECTION_NUMBER, sectionNumber)
                 fragment.arguments = args
                 return fragment
-            }
-
-            class GetIncomeDataTask internal constructor(fragView: View) : AsyncTask<Void, Void, String>() {
-                private val view: WeakReference<View> = WeakReference(fragView)
-                private lateinit var viewAdapter: RecyclerView.Adapter<*>
-                private lateinit var viewManager: LayoutManager
-                private val data: MutableList<Income> = mutableListOf<Income>()
-
-                override fun doInBackground(vararg params: Void): String? {
-                    if (data.size == 0) {
-                        val wsh = WebServiceHandler()
-                        return wsh.performGetCall("php/get_income.php")
-                    } else {
-                        return ""
-                    }
-                }
-
-                override fun onPostExecute(success: String?) {
-                    if (!success!!.isEmpty()) {
-                        // Convert JSON response to List<Income>
-                        val resp = JSONArray(success)
-                        for (inc in 0 until resp.length()) {
-                            val item = resp.getJSONObject(inc)
-                            data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
-                        }
-
-                        viewManager = LinearLayoutManager(view.get()!!.context)
-                        viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
-
-                        val recyclerView = view.get()!!.findViewById(R.id.rvIncome) as RecyclerView
-                        // use this setting to improve performance if you know that changes
-                        // in content do not change the layout size of the RecyclerView
-                        recyclerView.setHasFixedSize(true)
-
-                        // use a linear layout manager
-                        recyclerView.layoutManager = viewManager
-
-                        // specify an viewAdapter (see also next example)
-                        recyclerView.adapter = viewAdapter
-                    }
-                }
-
-                private fun incomeItemClicked(incItem: Income) {
-                    Toast.makeText(view.get()!!.context, "Clicked: ${incItem.id}", Toast.LENGTH_LONG).show()
-
-                    // Launch second activity, pass part ID as string parameter
-//            val showDetailActivityIntent = Intent(this, PartDetailActivity::class.java)
-//            showDetailActivityIntent.putExtra(Intent.EXTRA_TEXT, incItem.id.toString())
-//            startActivity(showDetailActivityIntent)
-                }
             }
         }
     }

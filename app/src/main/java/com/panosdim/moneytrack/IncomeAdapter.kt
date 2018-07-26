@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import kotlinx.android.synthetic.main.income_row.view.*
 
-class IncomeAdapter (val incomeItemList: List<Income>, val clickListener: (Income) -> Unit) :
+class IncomeAdapter (private val incomeItemList: List<Income>, private val clickListener: (Income) -> Unit) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

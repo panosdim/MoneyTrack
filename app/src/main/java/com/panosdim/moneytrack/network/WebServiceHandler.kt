@@ -1,6 +1,7 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.network
 
 import android.text.TextUtils
+import com.panosdim.moneytrack.prefs
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.DataOutputStream
