@@ -46,8 +46,17 @@ class MainActivity : AppCompatActivity() {
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
         fab.setOnClickListener { view ->
-            val intent = Intent(view!!.context, IncomeDetails::class.java)
-            view.context.startActivity(intent)
+            when (tabs.selectedTabPosition) {
+                0 -> {
+                    val intent = Intent(view!!.context, IncomeDetails::class.java)
+                    view.context.startActivity(intent)
+                }
+                1 -> Toast.makeText(this, "You select Expenses",
+                        Toast.LENGTH_LONG).show()
+                2 -> Toast.makeText(this, "You select Categories",
+                        Toast.LENGTH_LONG).show()
+            }
+
         }
     }
 
@@ -111,7 +120,7 @@ class MainActivity : AppCompatActivity() {
      */
     class PlaceholderFragment : Fragment() {
 
-        private val data: MutableList<Income> = mutableListOf<Income>()
+        private val data: MutableList<Income> = mutableListOf()
         private lateinit var mView: View
         private lateinit var viewAdapter: RecyclerView.Adapter<*>
 
@@ -130,11 +139,11 @@ class MainActivity : AppCompatActivity() {
                 recyclerView.adapter = viewAdapter
             }
 
-            when (arguments?.getInt(ARG_SECTION_NUMBER)) {
-                1 -> return mView
-                2 -> return inflater.inflate(R.layout.fragment_expenses, container, false)
-                3 -> return inflater.inflate(R.layout.fragment_categories, container, false)
-                else -> return inflater.inflate(R.layout.fragment_income, container, false)
+            return when (arguments?.getInt(ARG_SECTION_NUMBER)) {
+                1 -> mView
+                2 -> inflater.inflate(R.layout.fragment_expenses, container, false)
+                3 -> inflater.inflate(R.layout.fragment_categories, container, false)
+                else -> inflater.inflate(R.layout.fragment_income, container, false)
             }
         }
 
@@ -169,7 +178,7 @@ class MainActivity : AppCompatActivity() {
              * The fragment argument representing the section number for this
              * fragment.
              */
-            private val ARG_SECTION_NUMBER = "section_number"
+            private const val ARG_SECTION_NUMBER = "section_number"
 
             /**
              * Returns a new instance of this fragment for the given section
