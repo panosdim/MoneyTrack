@@ -1,9 +1,9 @@
 package com.panosdim.moneytrack
 
 import android.support.v7.widget.RecyclerView
-import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import kotlinx.android.synthetic.main.income_row.view.*
 
 class IncomeAdapter (private val incomeItemList: List<Income>, private val clickListener: (Income) -> Unit) :
@@ -29,9 +29,9 @@ class IncomeAdapter (private val incomeItemList: List<Income>, private val click
 
     class IncomeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(inc: Income, clickListener: (Income) -> Unit) {
-            itemView.tvDate.text = inc.date
-            itemView.tvSalary.text = inc.salary
-            itemView.tvComment.text = inc.comment
+            itemView.incDate.text = inc.date
+            itemView.incSalary.text = inc.salary
+            itemView.incComment.text = inc.comment
             itemView.setOnClickListener { clickListener(inc)}
         }
     }

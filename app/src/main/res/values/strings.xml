@@ -20,4 +20,6 @@
     <string name="salary">Salary</string>
     <string name="comment">Comment</string>
     <string name="title_activity_income_details">Income Details</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
 </resources>

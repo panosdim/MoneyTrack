@@ -10,6 +10,6 @@ class GetJsonData(private val mCallback: (result: String) -> Unit) : AsyncTask<S
     }
 
     override fun onPostExecute(result: String) {
-        mCallback(result);
+        mCallback(result)
     }
 }

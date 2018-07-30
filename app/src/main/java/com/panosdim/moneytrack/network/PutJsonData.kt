@@ -11,6 +11,6 @@ class PutJsonData(private val mCallback: (result: String) -> Unit, private val m
     }
 
     override fun onPostExecute(result: String) {
-        mCallback(result);
+        mCallback(result)
     }
 }

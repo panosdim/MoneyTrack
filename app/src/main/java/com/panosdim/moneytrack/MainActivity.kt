@@ -1,10 +1,7 @@
 package com.panosdim.moneytrack
 
-import android.content.Context
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.design.widget.TabLayout
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
@@ -12,14 +9,13 @@ import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.LayoutManager
 import android.view.*
 import android.widget.Toast
 import com.panosdim.moneytrack.network.GetJsonData
-import com.panosdim.moneytrack.network.WebServiceHandler
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
-import java.lang.ref.WeakReference
+import org.json.JSONObject
 
 
 class MainActivity : AppCompatActivity() {
@@ -50,13 +46,12 @@ class MainActivity : AppCompatActivity() {
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+            val intent = Intent(view!!.context, IncomeDetails::class.java)
+            view.context.startActivity(intent)
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
@@ -77,24 +72,19 @@ class MainActivity : AppCompatActivity() {
     private fun logout() {
         Toast.makeText(this, "Logging you out!",
                 Toast.LENGTH_LONG).show()
-        LogoutTask(this).execute()
+        GetJsonData(::logoutTask).execute("php/logout.php")
     }
 
-    companion object {
-        class LogoutTask internal constructor(context: Context) : AsyncTask<Void, Void, String>() {
-            private val context: WeakReference<Context> = WeakReference(context)
-
-            override fun doInBackground(vararg params: Void): String? {
-                val wsh = WebServiceHandler()
-                return wsh.performGetCall("php/logout.php")
-            }
-
-            override fun onPostExecute(success: String?) {
-                val intent = Intent(context.get(), LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                intent.putExtra(LOGGEDOUT_MESSAGE, true)
-                context.get()!!.startActivity(intent)
-            }
+    private fun logoutTask(result: String) {
+        val res = JSONObject(result)
+        if (res.getBoolean("loggedout")) {
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            intent.putExtra(LOGGEDOUT_MESSAGE, true)
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, "Fail to log you out!",
+                    Toast.LENGTH_LONG).show()
         }
     }
 
@@ -120,10 +110,10 @@ class MainActivity : AppCompatActivity() {
      * A placeholder fragment containing a simple view.
      */
     class PlaceholderFragment : Fragment() {
-        private var mView: View? = null
+
         private val data: MutableList<Income> = mutableListOf<Income>()
+        private lateinit var mView: View
         private lateinit var viewAdapter: RecyclerView.Adapter<*>
-        private lateinit var viewManager: LayoutManager
 
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
@@ -132,18 +122,11 @@ class MainActivity : AppCompatActivity() {
             if (data.size == 0) {
                 GetJsonData(::getIncomeDataTask).execute("php/get_income.php")
             } else {
-                viewManager = LinearLayoutManager(mView!!.context)
                 viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
 
-                val recyclerView = mView!!.findViewById(R.id.rvIncome) as RecyclerView
-                // use this setting to improve performance if you know that changes
-                // in content do not change the layout size of the RecyclerView
+                val recyclerView = mView.rvIncome
                 recyclerView.setHasFixedSize(true)
-
-                // use a linear layout manager
-                recyclerView.layoutManager = viewManager
-
-                // specify an viewAdapter (see also next example)
+                recyclerView.layoutManager = LinearLayoutManager(mView.context)
                 recyclerView.adapter = viewAdapter
             }
 
@@ -164,30 +147,21 @@ class MainActivity : AppCompatActivity() {
                     data.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
                 }
 
-                viewManager = LinearLayoutManager(mView!!.context)
                 viewAdapter = IncomeAdapter(data) { incItem: Income -> incomeItemClicked(incItem) }
 
-                val recyclerView = mView!!.findViewById(R.id.rvIncome) as RecyclerView
-                // use this setting to improve performance if you know that changes
-                // in content do not change the layout size of the RecyclerView
+                val recyclerView = mView.rvIncome
                 recyclerView.setHasFixedSize(true)
-
-                // use a linear layout manager
-                recyclerView.layoutManager = viewManager
-
-                // specify an viewAdapter (see also next example)
+                recyclerView.layoutManager = LinearLayoutManager(mView.context)
                 recyclerView.adapter = viewAdapter
             }
         }
 
         private fun incomeItemClicked(incItem: Income) {
-            Toast.makeText(mView!!.context, "Clicked: ${incItem.id}", Toast.LENGTH_LONG).show()
-
-            val intent = Intent(mView!!.context, IncomeDetails::class.java)
+            val intent = Intent(mView.context, IncomeDetails::class.java)
             val bundle = Bundle()
             bundle.putParcelable(INCOME_MESSAGE, incItem)
             intent.putExtras(bundle)
-            mView!!.context.startActivity(intent)
+            mView.context.startActivity(intent)
         }
 
         companion object {

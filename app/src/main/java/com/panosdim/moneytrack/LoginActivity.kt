@@ -9,12 +9,11 @@ import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.panosdim.moneytrack.network.GetJsonData
 import com.panosdim.moneytrack.network.PutJsonData
+import kotlinx.android.synthetic.main.activity_login.*
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -27,20 +26,14 @@ const val INCOME_MESSAGE = "com.panosdim.moneytrack.INCOME"
 class LoginActivity : AppCompatActivity() {
 
     // UI references.
-    private var mUsernameView: EditText? = null
-    private var mPasswordView: EditText? = null
-    private var mProgressView: View? = null
-    private var mLoginFormView: View? = null
-    private var mSnackbar: Snackbar? = null
+    private lateinit var mSnackbar: Snackbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         // Set up the login form.
-        mUsernameView = findViewById(R.id.username) as EditText
-        mPasswordView = findViewById(R.id.password) as EditText
-        mPasswordView!!.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
+        tvPassword.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
             if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
                 attemptLogin()
                 return@OnEditorActionListener true
@@ -48,11 +41,7 @@ class LoginActivity : AppCompatActivity() {
             false
         })
 
-        val mSignInButton = findViewById(R.id.sign_in_button) as Button
-        mSignInButton.setOnClickListener { attemptLogin() }
-
-        mLoginFormView = findViewById(R.id.login_form)
-        mProgressView = findViewById(R.id.login_progress)
+        btnLogin.setOnClickListener { attemptLogin() }
 
         // Check if we return from logout button
         // Get the Intent that started this activity and extract the string
@@ -60,8 +49,8 @@ class LoginActivity : AppCompatActivity() {
         if (!loggedOut) {
             // Show a progress spinner, and kick off a background task to
             // check for active session.
-            mSnackbar = Snackbar.make(findViewById(android.R.id.content), "Checking for active session!", Snackbar.LENGTH_LONG)
-            mSnackbar!!.show()
+            mSnackbar = Snackbar.make(root_layout, "Checking for active session!", Snackbar.LENGTH_LONG)
+            mSnackbar.show()
             showProgress(true)
             GetJsonData(::checkSessionTask).execute("php/session.php")
         }
@@ -73,11 +62,11 @@ class LoginActivity : AppCompatActivity() {
             if (resp.getBoolean("loggedIn")) {
                 val intent = Intent(this, MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                mSnackbar!!.dismiss()
+                mSnackbar.dismiss()
                 startActivity(intent)
             } else {
                 showProgress(false)
-                mSnackbar!!.dismiss()
+                mSnackbar.dismiss()
             }
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -91,27 +80,27 @@ class LoginActivity : AppCompatActivity() {
      */
     private fun attemptLogin() {
         // Reset errors.
-        mUsernameView!!.error = null
-        mPasswordView!!.error = null
+        tvUsername.error = null
+        tvPassword.error = null
 
         // Store values at the time of the login attempt.
-        val username = mUsernameView!!.text.toString()
-        val password = mPasswordView!!.text.toString()
+        val username = tvUsername.text.toString()
+        val password = tvPassword.text.toString()
 
         var cancel = false
         var focusView: View? = null
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView!!.error = getString(R.string.error_invalid_password)
-            focusView = mPasswordView
+        if (TextUtils.isEmpty(password) || !isPasswordValid(password)) {
+            tvPassword.error = getString(R.string.error_invalid_password)
+            focusView = tvPassword
             cancel = true
         }
 
         // Check for a valid username address.
         if (TextUtils.isEmpty(username)) {
-            mUsernameView!!.error = getString(R.string.error_field_required)
-            focusView = mUsernameView
+            tvUsername.error = getString(R.string.error_field_required)
+            focusView = tvUsername
             cancel = true
         }
 
@@ -161,19 +150,19 @@ class LoginActivity : AppCompatActivity() {
     private fun showProgress(show: Boolean) {
         val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime)
 
-        mLoginFormView!!.visibility = if (show) View.GONE else View.VISIBLE
-        mLoginFormView!!.animate().setDuration(shortAnimTime.toLong()).alpha(
+        login_form.visibility = if (show) View.GONE else View.VISIBLE
+        login_form.animate().setDuration(shortAnimTime.toLong()).alpha(
                 (if (show) 0 else 1).toFloat()).setListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
-                mLoginFormView!!.visibility = if (show) View.GONE else View.VISIBLE
+                login_form.visibility = if (show) View.GONE else View.VISIBLE
             }
         })
 
-        mProgressView!!.visibility = if (show) View.VISIBLE else View.GONE
-        mProgressView!!.animate().setDuration(shortAnimTime.toLong()).alpha(
+        login_progress.visibility = if (show) View.VISIBLE else View.GONE
+        login_progress.animate().setDuration(shortAnimTime.toLong()).alpha(
                 (if (show) 1 else 0).toFloat()).setListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
-                mProgressView!!.visibility = if (show) View.VISIBLE else View.GONE
+                login_progress.visibility = if (show) View.VISIBLE else View.GONE
             }
         })
     }
