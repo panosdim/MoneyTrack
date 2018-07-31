@@ -5,6 +5,7 @@ import android.app.DatePickerDialog
 import android.os.Bundle
 import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
+import android.text.InputFilter
 import android.view.View
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
@@ -22,6 +23,10 @@ class IncomeDetails : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_income_details)
         setSupportActionBar(toolbar)
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        supportActionBar!!.setDisplayShowHomeEnabled(true)
+
+        incSalary.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
         incDate.setOnClickListener {
             // Use the date from the TextView
@@ -50,6 +55,10 @@ class IncomeDetails : AppCompatActivity() {
             datePickerDialog.show()
         }
 
+        btnSave.setOnClickListener {
+            validateInputs()
+        }
+
         val bundle = intent.extras
         if (bundle != null) {
             val income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
@@ -59,6 +68,69 @@ class IncomeDetails : AppCompatActivity() {
             incDelete.visibility = View.VISIBLE
         } else {
             incDelete.visibility = View.GONE
+        }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private fun validateInputs() {
+        // Reset errors.
+        incDate.error = null
+        incSalary.error = null
+
+        // Store values.
+        val date = incDate.text.toString()
+        val salary = incSalary.text.toString()
+
+        var cancel = false
+        var focusView: View? = null
+
+        // Check for a valid date.
+        val df = SimpleDateFormat("yyyy-MM-dd")
+        val parsedDate: Date? = try {
+            df.parse(date)
+        } catch (e: ParseException) {
+            null
+        }
+        if (date.isEmpty()) {
+            incDate.error = getString(R.string.error_field_required)
+            focusView = incDate
+            cancel = true
+        }
+        if (parsedDate == null) {
+            incDate.error = getString(R.string.invalidDate)
+            focusView = incDate
+            cancel = true
+        }
+
+        // Check for a valid salary.
+        if (salary.isEmpty()) {
+            incSalary.error = getString(R.string.error_field_required)
+            focusView = incSalary
+            cancel = true
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView!!.requestFocus()
+        } else {
+            // TODO: Store data to server
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+//            showProgress(true)
+//            val jsonParam = JSONObject()
+//            try {
+//                jsonParam.put("username", username)
+//                jsonParam.put("password", password)
+//            } catch (e: JSONException) {
+//                e.printStackTrace()
+//            }
+//            PutJsonData(::loginTaskCallback, "php/login.php").execute(jsonParam)
         }
     }
 
