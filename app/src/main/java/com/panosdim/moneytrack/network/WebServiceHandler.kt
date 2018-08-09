@@ -29,6 +29,14 @@ class WebServiceHandler {
             conn.connectTimeout = 15000
             conn.requestMethod = "POST"
             conn.doOutput = true
+
+            if (msCookieManager.cookieStore.cookies.size == 0) {
+                conn.setRequestProperty("Cookie", prefs.phpSession)
+            } else {
+                // While joining the Cookies, use ',' or ';' as needed. Most of the servers are using ';'
+                conn.setRequestProperty("Cookie",
+                        TextUtils.join(";", msCookieManager.cookieStore.cookies))
+            }
             conn.setRequestProperty("Content-Type", "application/json")
 
             val printout = DataOutputStream(conn.outputStream)
@@ -36,17 +44,17 @@ class WebServiceHandler {
             printout.flush()
             printout.close()
 
-
             val responseCode = conn.responseCode
 
             if (responseCode == HttpsURLConnection.HTTP_OK) {
                 val headerFields = conn.headerFields
                 val cookiesHeader = headerFields[cookiesHeader]
-
-                for (cookie in cookiesHeader!!) {
-                    if (cookie.contains("PHPSESSID")) {
-                        prefs.phpSession = cookie
-                        msCookieManager.cookieStore.add(null, HttpCookie.parse(cookie)[0])
+                if (cookiesHeader != null) {
+                    for (cookie in cookiesHeader) {
+                        if (cookie.contains("PHPSESSID")) {
+                            prefs.phpSession = cookie
+                            msCookieManager.cookieStore.add(null, HttpCookie.parse(cookie)[0])
+                        }
                     }
                 }
 

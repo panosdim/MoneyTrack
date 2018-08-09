@@ -2,13 +2,17 @@ package com.panosdim.moneytrack
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.text.InputFilter
 import android.view.View
+import android.widget.Toast
+import com.panosdim.moneytrack.network.PutJsonData
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
+import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -17,6 +21,7 @@ import java.util.*
 class IncomeDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
+    private var income: Income? = null
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,16 +64,37 @@ class IncomeDetails : AppCompatActivity() {
             validateInputs()
         }
 
+        btnDelete.setOnClickListener {
+            if (income != null) {
+                PutJsonData(::deleteIncomeTask, "php/delete_income.php").execute(income!!.toJson())
+            } else {
+                Toast.makeText(this, "Income ID was not found",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+
         val bundle = intent.extras
         if (bundle != null) {
-            val income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
-            incDate.setText(income.date)
-            incSalary.setText(income.salary)
-            incComment.setText(income.comment)
-            incDelete.visibility = View.VISIBLE
+            income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
+            incDate.setText(income!!.date)
+            incSalary.setText(income!!.salary)
+            incComment.setText(income!!.comment)
+            btnDelete.visibility = View.VISIBLE
         } else {
-            incDelete.visibility = View.GONE
+            btnDelete.visibility = View.GONE
         }
+    }
+
+    private fun deleteIncomeTask(result: String) {
+        val res = JSONObject(result)
+        if (res.getString("status") != "error") {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+        }
+
+        Toast.makeText(this, res.getString("message"),
+                Toast.LENGTH_LONG).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -115,23 +141,31 @@ class IncomeDetails : AppCompatActivity() {
         }
 
         if (cancel) {
-            // There was an error; don't attempt login and focus the first
+            // There was an error; don't attempt to store data and focus the first
             // form field with an error.
             focusView!!.requestFocus()
         } else {
-            // TODO: Store data to server
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-//            showProgress(true)
-//            val jsonParam = JSONObject()
-//            try {
-//                jsonParam.put("username", username)
-//                jsonParam.put("password", password)
-//            } catch (e: JSONException) {
-//                e.printStackTrace()
-//            }
-//            PutJsonData(::loginTaskCallback, "php/login.php").execute(jsonParam)
+            if (income == null) {
+                income = Income(date = incDate.text.toString(), salary = incSalary.text.toString(), comment = incComment.text.toString())
+            } else {
+                income!!.date = incDate.text.toString()
+                income!!.salary = incSalary.text.toString()
+                income!!.comment = incComment.text.toString()
+            }
+
+            PutJsonData(::saveIncomeTask, "php/save_income.php").execute(income!!.toJson())
         }
     }
 
+    private fun saveIncomeTask(result: String) {
+        val res = JSONObject(result)
+        if (res.getString("status") != "error") {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+        }
+
+        Toast.makeText(this, res.getString("message"),
+                Toast.LENGTH_LONG).show()
+    }
 }

@@ -2,7 +2,10 @@ package com.panosdim.moneytrack
 
 import android.os.Parcel
 import android.os.Parcelable
-data class Income (val id: String, val date: String, val salary: String, val comment: String) : Parcelable {
+import org.json.JSONException
+import org.json.JSONObject
+
+data class Income (var id: String? = null, var date: String, var salary: String, var comment: String) : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readString(),
             parcel.readString(),
@@ -28,5 +31,18 @@ data class Income (val id: String, val date: String, val salary: String, val com
         override fun newArray(size: Int): Array<Income?> {
             return arrayOfNulls(size)
         }
+    }
+
+    fun toJson(): JSONObject {
+        val json = JSONObject()
+        try {
+            json.put("id", id)
+            json.put("date", date)
+            json.put("amount", salary)
+            json.put("comment", comment)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+        return json;
     }
 }
