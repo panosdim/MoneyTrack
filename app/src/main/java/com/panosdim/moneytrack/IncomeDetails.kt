@@ -8,7 +8,9 @@ import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.text.InputFilter
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
+import com.panosdim.moneytrack.R.id.text
 import com.panosdim.moneytrack.network.PutJsonData
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
@@ -21,7 +23,7 @@ import java.util.*
 class IncomeDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
-    private var income: Income? = null
+    private var income: Income = Income(date = "", salary = "", comment = "")
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,24 +67,25 @@ class IncomeDetails : AppCompatActivity() {
         }
 
         btnDelete.setOnClickListener {
-            if (income != null) {
+            if (income.id != null) {
                 PutJsonData(::deleteIncomeTask, "php/delete_income.php").execute(income!!.toJson())
             } else {
                 Toast.makeText(this, "Income ID was not found",
-                    Toast.LENGTH_LONG).show()
+                        Toast.LENGTH_LONG).show()
             }
         }
 
         val bundle = intent.extras
         if (bundle != null) {
             income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
-            incDate.setText(income!!.date)
-            incSalary.setText(income!!.salary)
-            incComment.setText(income!!.comment)
             btnDelete.visibility = View.VISIBLE
         } else {
             btnDelete.visibility = View.GONE
         }
+
+        incDate.setText(income.date)
+        incSalary.setText(income.salary)
+        incComment.setText(income.comment)
     }
 
     private fun deleteIncomeTask(result: String) {
@@ -145,15 +148,11 @@ class IncomeDetails : AppCompatActivity() {
             // form field with an error.
             focusView!!.requestFocus()
         } else {
-            if (income == null) {
-                income = Income(date = incDate.text.toString(), salary = incSalary.text.toString(), comment = incComment.text.toString())
-            } else {
-                income!!.date = incDate.text.toString()
-                income!!.salary = incSalary.text.toString()
-                income!!.comment = incComment.text.toString()
-            }
+            income.date = incDate.text.toString()
+            income.salary = incSalary.text.toString()
+            income.comment = incComment.text.toString()
 
-            PutJsonData(::saveIncomeTask, "php/save_income.php").execute(income!!.toJson())
+            PutJsonData(::saveIncomeTask, "php/save_income.php").execute(income.toJson())
         }
     }
 

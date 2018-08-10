@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.income_row.view.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 
 class IncomeAdapter (private val incomeItemList: List<Income>, private val clickListener: (Income) -> Unit) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -29,8 +31,13 @@ class IncomeAdapter (private val incomeItemList: List<Income>, private val click
 
     class IncomeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(inc: Income, clickListener: (Income) -> Unit) {
+            val symbols = DecimalFormatSymbols()
+            symbols.groupingSeparator = '.'
+            symbols.decimalSeparator = ','
+            val moneyFormat = DecimalFormat("#,###.00 €", symbols)
+
             itemView.incDate.text = inc.date
-            itemView.incSalary.text = inc.salary
+            itemView.incSalary.text = moneyFormat.format(inc.salary.toDouble())
             itemView.incComment.text = inc.comment
             itemView.setOnClickListener { clickListener(inc)}
         }
