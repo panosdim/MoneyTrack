@@ -20,7 +20,10 @@
     <string name="salary">Salary</string>
     <string name="comment">Comment</string>
     <string name="title_activity_income_details">Income Details</string>
+    <string name="title_activity_expense_details">Expense Details</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="invalidDate">Invalid Date</string>
+    <string name="expense">Expense</string>
+    <string name="category">Category</string>
 </resources>

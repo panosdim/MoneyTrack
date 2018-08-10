@@ -8,37 +8,43 @@ import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.text.InputFilter
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.panosdim.moneytrack.network.PutJsonData
-import kotlinx.android.synthetic.main.activity_income_details.*
-import kotlinx.android.synthetic.main.content_income_details.*
+import kotlinx.android.synthetic.main.activity_expense_details.*
+import kotlinx.android.synthetic.main.content_expense_details.*
 import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class IncomeDetails : AppCompatActivity() {
+class ExpenseDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
-    private var income: Income = Income(date = "", salary = "", comment = "")
+    private var expense: Expense = Expense(date = "", amount = "", category = "", comment = "")
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_income_details)
+        setContentView(R.layout.activity_expense_details)
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         supportActionBar!!.setDisplayShowHomeEnabled(true)
 
-        incSalary.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
+        // Set decimal filter to amount
+        expAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
-        incDate.setOnClickListener {
+        // Initialize category spinner data
+        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_item, categories)
+        expCategory.adapter = spinnerData;
+
+        expDate.setOnClickListener {
             // Use the date from the TextView
             val c = Calendar.getInstance()
             val df = SimpleDateFormat("yyyy-MM-dd")
             val date: Date? = try {
-                df.parse(incDate.text.toString())
+                df.parse(expDate.text.toString())
             } catch (e: ParseException) {
                 null
             }
@@ -51,11 +57,11 @@ class IncomeDetails : AppCompatActivity() {
             val cDay = c.get(Calendar.DAY_OF_MONTH)
 
             // date picker dialog
-            datePickerDialog = DatePickerDialog(this@IncomeDetails,
+            datePickerDialog = DatePickerDialog(this@ExpenseDetails,
                     DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                         // set day of month , month and year value in the edit text
                         c.set(year, month, dayOfMonth, 0, 0)
-                        incDate.setText(df.format(c.time))
+                        expDate.setText(df.format(c.time))
                     }, cYear, cMonth, cDay)
             datePickerDialog.show()
         }
@@ -65,28 +71,32 @@ class IncomeDetails : AppCompatActivity() {
         }
 
         btnDelete.setOnClickListener {
-            if (income.id != null) {
-                PutJsonData(::deleteIncomeTask, "php/delete_income.php").execute(income.toJson())
+            if (expense.id != null) {
+                PutJsonData(::deleteExpenseTask, "php/delete_expense.php").execute(expense.toJson())
             } else {
-                Toast.makeText(this, "Income ID was not found",
+                Toast.makeText(this, "Expense ID was not found",
                         Toast.LENGTH_LONG).show()
             }
         }
 
         val bundle = intent.extras
         if (bundle != null) {
-            income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
+            expense = bundle.getParcelable<Parcelable>(EXPENSE_MESSAGE) as Expense
             btnDelete.visibility = View.VISIBLE
         } else {
             btnDelete.visibility = View.GONE
         }
 
-        incDate.setText(income.date)
-        incSalary.setText(income.salary)
-        incComment.setText(income.comment)
+        expDate.setText(expense.date)
+        expAmount.setText(expense.amount)
+        val selectedItem = spinnerData.getPosition(categories.find {
+            it.category.equals(expense.category)
+        })
+        expCategory.setSelection(selectedItem)
+        expComment.setText(expense.comment)
     }
 
-    private fun deleteIncomeTask(result: String) {
+    private fun deleteExpenseTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
             val intent = Intent(this, MainActivity::class.java)
@@ -106,12 +116,12 @@ class IncomeDetails : AppCompatActivity() {
     @SuppressLint("SimpleDateFormat")
     private fun validateInputs() {
         // Reset errors.
-        incDate.error = null
-        incSalary.error = null
+        expDate.error = null
+        expAmount.error = null
 
         // Store values.
-        val date = incDate.text.toString()
-        val salary = incSalary.text.toString()
+        val date = expDate.text.toString()
+        val amount = expAmount.text.toString()
 
         var cancel = false
         var focusView: View? = null
@@ -124,20 +134,20 @@ class IncomeDetails : AppCompatActivity() {
             null
         }
         if (date.isEmpty()) {
-            incDate.error = getString(R.string.error_field_required)
-            focusView = incDate
+            expDate.error = getString(R.string.error_field_required)
+            focusView = expDate
             cancel = true
         }
         if (parsedDate == null) {
-            incDate.error = getString(R.string.invalidDate)
-            focusView = incDate
+            expDate.error = getString(R.string.invalidDate)
+            focusView = expDate
             cancel = true
         }
 
         // Check for a valid salary.
-        if (salary.isEmpty()) {
-            incSalary.error = getString(R.string.error_field_required)
-            focusView = incSalary
+        if (amount.isEmpty()) {
+            expAmount.error = getString(R.string.error_field_required)
+            focusView = expAmount
             cancel = true
         }
 
@@ -146,15 +156,16 @@ class IncomeDetails : AppCompatActivity() {
             // form field with an error.
             focusView!!.requestFocus()
         } else {
-            income.date = incDate.text.toString()
-            income.salary = incSalary.text.toString()
-            income.comment = incComment.text.toString()
+            expense.date = expDate.text.toString()
+            expense.amount = expAmount.text.toString()
+            expense.category = expCategory.selectedItem.toString()
+            expense.comment = expComment.text.toString()
 
-            PutJsonData(::saveIncomeTask, "php/save_income.php").execute(income.toJson())
+            PutJsonData(::saveExpenseTask, "php/save_expense.php").execute(expense.toJson())
         }
     }
 
-    private fun saveIncomeTask(result: String) {
+    private fun saveExpenseTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
             val intent = Intent(this, MainActivity::class.java)
