@@ -36,7 +36,7 @@ class ExpenseDetails : AppCompatActivity() {
         expAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
         // Initialize category spinner data
-        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_item, categories)
+        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_dropdown_item, categories)
         expCategory.adapter = spinnerData;
 
         expDate.setOnClickListener {
@@ -101,6 +101,7 @@ class ExpenseDetails : AppCompatActivity() {
         if (res.getString("status") != "error") {
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            intent.putExtra(TAB_NUMBER_MESSAGE, 1)
             startActivity(intent)
         }
 
@@ -170,6 +171,7 @@ class ExpenseDetails : AppCompatActivity() {
         if (res.getString("status") != "error") {
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            intent.putExtra(TAB_NUMBER_MESSAGE, 1)
             startActivity(intent)
         }
 

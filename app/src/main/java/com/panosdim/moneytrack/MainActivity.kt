@@ -13,6 +13,7 @@ import android.view.*
 import android.widget.Toast
 import com.panosdim.moneytrack.network.GetJsonData
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -62,6 +63,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         GetJsonData(::categoriesTask).execute("php/get_categories.php")
+
+        val selectedTab = intent.getIntExtra(TAB_NUMBER_MESSAGE, 0)
+        container.currentItem = selectedTab
     }
 
     private fun categoriesTask(result: String) {
@@ -164,7 +168,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 expenseViewAdapter = ExpenseAdapter(expenseData) { expItem: Expense -> expenseItemClicked(expItem) }
 
-                val recyclerView = expenseView.rvIncome
+                val recyclerView = expenseView.rvExpenses
                 recyclerView.setHasFixedSize(true)
                 recyclerView.layoutManager = LinearLayoutManager(expenseView.context)
                 recyclerView.adapter = expenseViewAdapter
@@ -189,7 +193,7 @@ class MainActivity : AppCompatActivity() {
 
                 expenseViewAdapter = ExpenseAdapter(expenseData) { expItem: Expense -> expenseItemClicked(expItem) }
 
-                val recyclerView = expenseView.rvIncome
+                val recyclerView = expenseView.rvExpenses
                 recyclerView.setHasFixedSize(true)
                 recyclerView.layoutManager = LinearLayoutManager(expenseView.context)
                 recyclerView.adapter = expenseViewAdapter

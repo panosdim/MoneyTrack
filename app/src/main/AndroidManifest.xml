@@ -29,12 +29,12 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".IncomeDetails"
-            android:label="@string/title_activity_expense_details"
+            android:label="@string/title_activity_income_details"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".ExpenseDetails"
-            android:label="@string/title_activity_income_details"
+            android:label="@string/title_activity_expense_details"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
