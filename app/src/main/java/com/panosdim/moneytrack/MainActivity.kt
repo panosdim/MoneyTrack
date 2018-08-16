@@ -1,7 +1,9 @@
 package com.panosdim.moneytrack
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.support.design.widget.TabLayout
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
@@ -9,6 +11,7 @@ import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.SparseArray
 import android.view.*
 import android.widget.Toast
 import com.panosdim.moneytrack.network.GetJsonData
@@ -18,6 +21,11 @@ import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
 import org.json.JSONObject
 
+
+const val NEW_INCOME = 0
+const val EDIT_INCOME = 1
+const val NEW_EXPENSE = 3
+const val EDIT_EXPENSE = 4
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,11 +58,11 @@ class MainActivity : AppCompatActivity() {
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(view!!.context, IncomeDetails::class.java)
-                    view.context.startActivity(intent)
+                    startActivityForResult(intent, NEW_INCOME)
                 }
                 1 -> {
                     val intent = Intent(view!!.context, ExpenseDetails::class.java)
-                    view.context.startActivity(intent)
+                    startActivityForResult(intent, NEW_EXPENSE)
                 }
                 2 -> Toast.makeText(this, "You select Categories",
                         Toast.LENGTH_LONG).show()
@@ -66,6 +74,52 @@ class MainActivity : AppCompatActivity() {
 
         val selectedTab = intent.getIntExtra(TAB_NUMBER_MESSAGE, 0)
         container.currentItem = selectedTab
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            val bundle = data.extras
+            if (bundle != null) {
+                val fragment = mSectionsPagerAdapter!!.getRegisteredFragment(container.currentItem) as PlaceholderFragment
+                if (requestCode == NEW_INCOME) {
+                    val income = bundle.getParcelable<Parcelable>(EDIT_INCOME_MESSAGE) as Income
+                    fragment.incomeData.add(income)
+                    fragment.incomeData.sortByDescending { it.date }
+                    container.rvIncome.adapter.notifyDataSetChanged()
+                }
+
+                if (requestCode == EDIT_INCOME) {
+                    val income = bundle.getParcelable<Parcelable>(EDIT_INCOME_MESSAGE) as Income
+                    if (bundle.getBoolean(DELETE_TASK)) {
+                        fragment.incomeData.remove(income)
+                    } else {
+                        val index = fragment.incomeData.indexOfFirst { it.id == income.id }
+                        fragment.incomeData[index] = income
+                        fragment.incomeData.sortByDescending { it.date }
+                    }
+                    container.rvIncome.adapter.notifyDataSetChanged()
+                }
+
+                if (requestCode == NEW_EXPENSE) {
+                    val expense = bundle.getParcelable<Parcelable>(EDIT_EXPENSE_MESSAGE) as Expense
+                    fragment.expenseData.add(expense)
+                    fragment.expenseData.sortByDescending { it.date }
+                    container.rvExpenses.adapter.notifyDataSetChanged()
+                }
+
+                if (requestCode == EDIT_EXPENSE) {
+                    val expense = bundle.getParcelable<Parcelable>(EDIT_EXPENSE_MESSAGE) as Expense
+                    if (bundle.getBoolean(DELETE_TASK)) {
+                        fragment.expenseData.remove(expense)
+                    } else {
+                        val index = fragment.expenseData.indexOfFirst { it.id == expense.id }
+                        fragment.expenseData[index] = expense
+                        fragment.expenseData.sortByDescending { it.date }
+                    }
+                    container.rvExpenses.adapter.notifyDataSetChanged()
+                }
+            }
+        }
     }
 
     private fun categoriesTask(result: String) {
@@ -121,6 +175,7 @@ class MainActivity : AppCompatActivity() {
      * one of the sections/tabs/pages.
      */
     inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
+        private var registeredFragments = SparseArray<Fragment>()
 
         override fun getItem(position: Int): Fragment {
             // getItem is called to instantiate the fragment for the given page.
@@ -132,6 +187,21 @@ class MainActivity : AppCompatActivity() {
             // Show 3 total pages.
             return 3
         }
+
+        override fun instantiateItem(container: ViewGroup, position: Int): Any {
+            val fragment = super.instantiateItem(container, position) as Fragment
+            registeredFragments.put(position, fragment)
+            return fragment
+        }
+
+        override fun destroyItem(container: ViewGroup?, position: Int, `object`: Any) {
+            registeredFragments.remove(position)
+            super.destroyItem(container, position, `object`)
+        }
+
+        fun getRegisteredFragment(position: Int): Fragment {
+            return registeredFragments.get(position)
+        }
     }
 
     /**
@@ -139,11 +209,11 @@ class MainActivity : AppCompatActivity() {
      */
     class PlaceholderFragment : Fragment() {
 
-        private val incomeData: MutableList<Income> = mutableListOf()
+        val incomeData: MutableList<Income> = mutableListOf()
         private lateinit var incomeView: View
         private lateinit var incomeViewAdapter: RecyclerView.Adapter<*>
 
-        private val expenseData: MutableList<Expense> = mutableListOf()
+        val expenseData: MutableList<Expense> = mutableListOf()
         private lateinit var expenseView: View
         private lateinit var expenseViewAdapter: RecyclerView.Adapter<*>
 
@@ -205,7 +275,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(EXPENSE_MESSAGE, expItem)
             intent.putExtras(bundle)
-            expenseView.context.startActivity(intent)
+            activity.startActivityForResult(intent, EDIT_EXPENSE)
         }
 
         private fun getIncomeDataTask(result: String) {
@@ -231,7 +301,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(INCOME_MESSAGE, incItem)
             intent.putExtras(bundle)
-            incomeView.context.startActivity(intent)
+            activity.startActivityForResult(intent, EDIT_INCOME)
         }
 
         companion object {

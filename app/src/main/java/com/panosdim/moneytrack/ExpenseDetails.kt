@@ -1,6 +1,7 @@
 package com.panosdim.moneytrack
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
@@ -18,6 +19,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
+const val EDIT_EXPENSE_MESSAGE = "com.panosdim.moneytrack.EDIT_EXPENSE"
 
 class ExpenseDetails : AppCompatActivity() {
 
@@ -37,7 +39,7 @@ class ExpenseDetails : AppCompatActivity() {
 
         // Initialize category spinner data
         val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_dropdown_item, categories)
-        expCategory.adapter = spinnerData;
+        expCategory.adapter = spinnerData
 
         expDate.setOnClickListener {
             // Use the date from the TextView
@@ -90,7 +92,7 @@ class ExpenseDetails : AppCompatActivity() {
         expDate.setText(expense.date)
         expAmount.setText(expense.amount)
         val selectedItem = spinnerData.getPosition(categories.find {
-            it.category.equals(expense.category)
+            it.category == expense.category
         })
         expCategory.setSelection(selectedItem)
         expComment.setText(expense.comment)
@@ -99,10 +101,13 @@ class ExpenseDetails : AppCompatActivity() {
     private fun deleteExpenseTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            intent.putExtra(TAB_NUMBER_MESSAGE, 1)
-            startActivity(intent)
+            val returnIntent = Intent()
+            val bundle = Bundle()
+            bundle.putParcelable(EDIT_EXPENSE_MESSAGE, expense)
+            bundle.putBoolean(DELETE_TASK, true)
+            returnIntent.putExtras(bundle)
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
         }
 
         Toast.makeText(this, res.getString("message"),
@@ -169,13 +174,24 @@ class ExpenseDetails : AppCompatActivity() {
     private fun saveExpenseTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            intent.putExtra(TAB_NUMBER_MESSAGE, 1)
-            startActivity(intent)
+            if (expense.id == null) {
+                expense.id = res.getString("id")
+            }
+            val returnIntent = Intent()
+            val bundle = Bundle()
+            bundle.putParcelable(EDIT_EXPENSE_MESSAGE, expense)
+            returnIntent.putExtras(bundle)
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
         }
 
         Toast.makeText(this, res.getString("message"),
                 Toast.LENGTH_LONG).show()
+    }
+
+    override fun onBackPressed() {
+        val returnIntent = Intent()
+        setResult(Activity.RESULT_CANCELED, returnIntent)
+        finish()
     }
 }

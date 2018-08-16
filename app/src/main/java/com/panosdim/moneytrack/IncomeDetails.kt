@@ -1,6 +1,7 @@
 package com.panosdim.moneytrack
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
@@ -17,6 +18,8 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
+const val EDIT_INCOME_MESSAGE = "com.panosdim.moneytrack.EDIT_INCOME"
+const val DELETE_TASK = "DELETE"
 
 class IncomeDetails : AppCompatActivity() {
 
@@ -89,9 +92,13 @@ class IncomeDetails : AppCompatActivity() {
     private fun deleteIncomeTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
+            val returnIntent = Intent()
+            val bundle = Bundle()
+            bundle.putParcelable(EDIT_INCOME_MESSAGE, income)
+            bundle.putBoolean(DELETE_TASK, true)
+            returnIntent.putExtras(bundle)
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
         }
 
         Toast.makeText(this, res.getString("message"),
@@ -157,12 +164,24 @@ class IncomeDetails : AppCompatActivity() {
     private fun saveIncomeTask(result: String) {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
+            if (income.id == null) {
+                income.id = res.getString("id")
+            }
+            val returnIntent = Intent()
+            val bundle = Bundle()
+            bundle.putParcelable(EDIT_INCOME_MESSAGE, income)
+            returnIntent.putExtras(bundle)
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
         }
 
         Toast.makeText(this, res.getString("message"),
                 Toast.LENGTH_LONG).show()
+    }
+
+    override fun onBackPressed() {
+        val returnIntent = Intent()
+        setResult(Activity.RESULT_CANCELED, returnIntent)
+        finish()
     }
 }
