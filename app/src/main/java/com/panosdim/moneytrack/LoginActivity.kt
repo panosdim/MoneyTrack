@@ -20,7 +20,7 @@ import org.json.JSONObject
 const val LOGGEDOUT_MESSAGE = "com.panosdim.moneytrack.LOGGEDOUT"
 const val EXPENSE_MESSAGE = "com.panosdim.moneytrack.EXPENSE"
 const val INCOME_MESSAGE = "com.panosdim.moneytrack.INCOME"
-const val TAB_NUMBER_MESSAGE = "com.panosdim.moneytrack.TAB"
+const val CATEGORY_MESSAGE = "com.panosdim.moneytrack.CATEGORY"
 
 /**
  * A login screen that offers login via username/password.

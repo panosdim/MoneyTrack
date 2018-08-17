@@ -16,6 +16,7 @@ import android.view.*
 import android.widget.Toast
 import com.panosdim.moneytrack.network.GetJsonData
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_categories.view.*
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
@@ -26,6 +27,7 @@ const val NEW_INCOME = 0
 const val EDIT_INCOME = 1
 const val NEW_EXPENSE = 3
 const val EDIT_EXPENSE = 4
+const val CATEGORY_CODE = 6
 
 class MainActivity : AppCompatActivity() {
 
@@ -64,16 +66,17 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(view!!.context, ExpenseDetails::class.java)
                     startActivityForResult(intent, NEW_EXPENSE)
                 }
-                2 -> Toast.makeText(this, "You select Categories",
-                        Toast.LENGTH_LONG).show()
+                2 -> {
+                    val intent = Intent(view!!.context, CategoryDetails::class.java)
+                    startActivityForResult(intent, CATEGORY_CODE)
+                }
             }
 
         }
 
-        GetJsonData(::categoriesTask).execute("php/get_categories.php")
-
-        val selectedTab = intent.getIntExtra(TAB_NUMBER_MESSAGE, 0)
-        container.currentItem = selectedTab
+        if (categories.size == 0) {
+            GetJsonData(::categoriesTask).execute("php/get_categories.php")
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
@@ -118,6 +121,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     container.rvExpenses.adapter.notifyDataSetChanged()
                 }
+            }
+            if (requestCode == CATEGORY_CODE ) {
+                container.rvCategories.adapter.notifyDataSetChanged()
             }
         }
     }
@@ -217,6 +223,9 @@ class MainActivity : AppCompatActivity() {
         private lateinit var expenseView: View
         private lateinit var expenseViewAdapter: RecyclerView.Adapter<*>
 
+        private lateinit var categoryView: View
+        private lateinit var categoryViewAdapter: RecyclerView.Adapter<*>
+
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
 
@@ -244,11 +253,19 @@ class MainActivity : AppCompatActivity() {
                 recyclerView.adapter = expenseViewAdapter
             }
 
+            categoryView = inflater.inflate(R.layout.fragment_categories, container, false)
+            categoryViewAdapter = CategoryAdapter(categories) { catItem: Category -> categoryItemClicked(catItem) }
+
+            val recyclerView = categoryView.rvCategories
+            recyclerView.setHasFixedSize(true)
+            recyclerView.layoutManager = LinearLayoutManager(categoryView.context)
+            recyclerView.adapter = categoryViewAdapter
+
             return when (arguments?.getInt(ARG_SECTION_NUMBER)) {
                 1 -> incomeView
                 2 -> expenseView
-                3 -> inflater.inflate(R.layout.fragment_categories, container, false)
-                else -> inflater.inflate(R.layout.fragment_income, container, false)
+                3 -> categoryView
+                else -> incomeView
             }
         }
 
@@ -276,6 +293,14 @@ class MainActivity : AppCompatActivity() {
             bundle.putParcelable(EXPENSE_MESSAGE, expItem)
             intent.putExtras(bundle)
             activity.startActivityForResult(intent, EDIT_EXPENSE)
+        }
+
+        private fun categoryItemClicked(catItem: Category) {
+            val intent = Intent(categoryView.context, CategoryDetails::class.java)
+            val bundle = Bundle()
+            bundle.putParcelable(CATEGORY_MESSAGE, catItem)
+            intent.putExtras(bundle)
+            activity.startActivityForResult(intent, CATEGORY_CODE)
         }
 
         private fun getIncomeDataTask(result: String) {
