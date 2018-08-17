@@ -18,13 +18,10 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-const val EDIT_INCOME_MESSAGE = "com.panosdim.moneytrack.EDIT_INCOME"
-const val DELETE_TASK = "DELETE"
-
 class IncomeDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
-    private var income: Income = Income(date = "", salary = "", comment = "")
+    private var income = Income(date = "", salary = "", comment = "")
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,10 +90,7 @@ class IncomeDetails : AppCompatActivity() {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
             val returnIntent = Intent()
-            val bundle = Bundle()
-            bundle.putParcelable(EDIT_INCOME_MESSAGE, income)
-            bundle.putBoolean(DELETE_TASK, true)
-            returnIntent.putExtras(bundle)
+            incomeList.remove(income)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -166,11 +160,13 @@ class IncomeDetails : AppCompatActivity() {
         if (res.getString("status") != "error") {
             if (income.id == null) {
                 income.id = res.getString("id")
+                incomeList.add(income)
+            } else {
+                val index = incomeList.indexOfFirst { it.id == income.id }
+                incomeList[index] = income
             }
+            incomeList.sortByDescending { it.date }
             val returnIntent = Intent()
-            val bundle = Bundle()
-            bundle.putParcelable(EDIT_INCOME_MESSAGE, income)
-            returnIntent.putExtras(bundle)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }

@@ -8,8 +8,7 @@ import org.json.JSONObject
 data class Category(var id: String? = null, var category: String) : Parcelable {
     constructor(parcel: Parcel) : this(
             parcel.readString(),
-            parcel.readString()) {
-    }
+            parcel.readString())
 
     override fun toString(): String {
         return category
@@ -42,6 +41,6 @@ data class Category(var id: String? = null, var category: String) : Parcelable {
         } catch (e: JSONException) {
             e.printStackTrace()
         }
-        return json;
+        return json
     }
 }

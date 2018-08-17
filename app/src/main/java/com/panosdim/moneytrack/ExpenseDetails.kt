@@ -19,12 +19,10 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-const val EDIT_EXPENSE_MESSAGE = "com.panosdim.moneytrack.EDIT_EXPENSE"
-
 class ExpenseDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
-    private var expense: Expense = Expense(date = "", amount = "", category = "", comment = "")
+    private var expense = Expense(date = "", amount = "", category = "", comment = "")
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +36,7 @@ class ExpenseDetails : AppCompatActivity() {
         expAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
         // Initialize category spinner data
-        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_dropdown_item, categories)
+        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_dropdown_item, categoriesList)
         expCategory.adapter = spinnerData
 
         expDate.setOnClickListener {
@@ -91,7 +89,7 @@ class ExpenseDetails : AppCompatActivity() {
 
         expDate.setText(expense.date)
         expAmount.setText(expense.amount)
-        val selectedItem = spinnerData.getPosition(categories.find {
+        val selectedItem = spinnerData.getPosition(categoriesList.find {
             it.category == expense.category
         })
         expCategory.setSelection(selectedItem)
@@ -102,10 +100,7 @@ class ExpenseDetails : AppCompatActivity() {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
             val returnIntent = Intent()
-            val bundle = Bundle()
-            bundle.putParcelable(EDIT_EXPENSE_MESSAGE, expense)
-            bundle.putBoolean(DELETE_TASK, true)
-            returnIntent.putExtras(bundle)
+            expensesList.remove(expense)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -176,11 +171,13 @@ class ExpenseDetails : AppCompatActivity() {
         if (res.getString("status") != "error") {
             if (expense.id == null) {
                 expense.id = res.getString("id")
+                expensesList.add(expense)
+            } else {
+                val index = expensesList.indexOfFirst { it.id == expense.id }
+                expensesList[index] = expense
             }
+            expensesList.sortByDescending { it.date }
             val returnIntent = Intent()
-            val bundle = Bundle()
-            bundle.putParcelable(EDIT_EXPENSE_MESSAGE, expense)
-            returnIntent.putExtras(bundle)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }

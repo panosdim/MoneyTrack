@@ -43,6 +43,6 @@ data class Income (var id: String? = null, var date: String, var salary: String,
         } catch (e: JSONException) {
             e.printStackTrace()
         }
-        return json;
+        return json
     }
 }

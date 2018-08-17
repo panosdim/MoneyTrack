@@ -15,7 +15,7 @@ import org.json.JSONObject
 
 class CategoryDetails : AppCompatActivity() {
 
-    private var category: Category = Category(category = "")
+    private var category = Category(category = "")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +52,7 @@ class CategoryDetails : AppCompatActivity() {
         val res = JSONObject(result)
         if (res.getString("status") != "error") {
             val returnIntent = Intent()
-            categories.remove(category)
+            categoriesList.remove(category)
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -99,10 +99,10 @@ class CategoryDetails : AppCompatActivity() {
         if (res.getString("status") != "error") {
             if (category.id == null) {
                 category.id = res.getString("id")
-                categories.add(category)
+                categoriesList.add(category)
             } else {
-                val index = categories.indexOfFirst { it.id == category.id }
-                categories[index] = category
+                val index = categoriesList.indexOfFirst { it.id == category.id }
+                categoriesList[index] = category
             }
             val returnIntent = Intent()
             setResult(Activity.RESULT_OK, returnIntent)

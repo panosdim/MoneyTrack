@@ -11,8 +11,7 @@ data class Expense(var id: String? = null, var date: String, var amount: String,
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
-            parcel.readString()) {
-    }
+            parcel.readString())
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
@@ -39,8 +38,8 @@ data class Expense(var id: String? = null, var date: String, var amount: String,
     fun toJson(): JSONObject {
         val json = JSONObject()
         try {
-            val categoryID = categories.find {
-                it.category.equals(category)
+            val categoryID = categoriesList.find {
+                it.category == category
             }!!.id
             json.put("id", id)
             json.put("date", date)
@@ -50,7 +49,7 @@ data class Expense(var id: String? = null, var date: String, var amount: String,
         } catch (e: JSONException) {
             e.printStackTrace()
         }
-        return json;
+        return json
     }
 
 }
