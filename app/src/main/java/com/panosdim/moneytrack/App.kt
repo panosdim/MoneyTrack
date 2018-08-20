@@ -1,6 +1,9 @@
 package com.panosdim.moneytrack
 
 import android.app.Application
+import com.panosdim.moneytrack.category.Category
+import com.panosdim.moneytrack.expense.Expense
+import com.panosdim.moneytrack.income.Income
 
 val prefs: Prefs by lazy {
     App.prefs!!

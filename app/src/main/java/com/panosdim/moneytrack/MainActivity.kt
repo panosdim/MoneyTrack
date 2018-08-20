@@ -12,6 +12,15 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.*
 import android.widget.Toast
+import com.panosdim.moneytrack.category.Category
+import com.panosdim.moneytrack.category.CategoryAdapter
+import com.panosdim.moneytrack.category.CategoryDetails
+import com.panosdim.moneytrack.expense.Expense
+import com.panosdim.moneytrack.expense.ExpenseAdapter
+import com.panosdim.moneytrack.expense.ExpenseDetails
+import com.panosdim.moneytrack.income.Income
+import com.panosdim.moneytrack.income.IncomeAdapter
+import com.panosdim.moneytrack.income.IncomeDetails
 import com.panosdim.moneytrack.network.GetJsonData
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_categories.view.*

@@ -1,7 +1,8 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.expense
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.panosdim.moneytrack.categoriesList
 import org.json.JSONException
 import org.json.JSONObject
 

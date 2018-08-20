@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.category
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -8,6 +8,9 @@ import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Toast
+import com.panosdim.moneytrack.CATEGORY_MESSAGE
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.network.PutJsonData
 import kotlinx.android.synthetic.main.activity_category_details.*
 import kotlinx.android.synthetic.main.content_category_details.*

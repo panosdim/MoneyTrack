@@ -1,9 +1,10 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.category
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.panosdim.moneytrack.R
 import kotlinx.android.synthetic.main.category_row.view.*
 
 class CategoryAdapter (private val categoryItemList: List<Category>, private val clickListener: (Category) -> Unit) :

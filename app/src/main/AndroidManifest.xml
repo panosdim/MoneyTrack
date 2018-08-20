@@ -28,17 +28,17 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".IncomeDetails"
+            android:name=".income.IncomeDetails"
             android:label="@string/title_activity_income_details"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
-            android:name=".ExpenseDetails"
+            android:name=".expense.ExpenseDetails"
             android:label="@string/title_activity_expense_details"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
-            android:name=".CategoryDetails"
+            android:name=".category.CategoryDetails"
             android:label="@string/title_activity_category_details"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>

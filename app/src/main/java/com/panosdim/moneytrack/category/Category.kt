@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.category
 
 import android.os.Parcel
 import android.os.Parcelable

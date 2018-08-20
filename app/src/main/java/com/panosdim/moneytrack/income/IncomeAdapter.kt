@@ -1,14 +1,15 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.income
 
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.expense_row.view.*
+import com.panosdim.moneytrack.R
+import kotlinx.android.synthetic.main.income_row.view.*
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
-class ExpenseAdapter (private val expenseItemList: List<Expense>, private val clickListener: (Expense) -> Unit) :
+class IncomeAdapter (private val incomeItemList: List<Income>, private val clickListener: (Income) -> Unit) :
         RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -17,30 +18,29 @@ class ExpenseAdapter (private val expenseItemList: List<Expense>, private val cl
         // Use context from main app -> also supplies theme layout values!
         val inflater = LayoutInflater.from(parent.context)
         // Inflate XML. Last parameter: don't immediately attach new view to the parent view group
-        val view = inflater.inflate(R.layout.expense_row, parent, false)
-        return ExpenseViewHolder(view)
+        val view = inflater.inflate(R.layout.income_row, parent, false)
+        return IncomeViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         // Populate ViewHolder with data that corresponds to the position in the list
         // which we are told to load
-        (holder as ExpenseViewHolder).bind(expenseItemList[position], clickListener)
+        (holder as IncomeViewHolder).bind(incomeItemList[position], clickListener)
     }
 
-    override fun getItemCount() = expenseItemList.size
+    override fun getItemCount() = incomeItemList.size
 
-    class ExpenseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(exp: Expense, clickListener: (Expense) -> Unit) {
+    class IncomeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(inc: Income, clickListener: (Income) -> Unit) {
             val symbols = DecimalFormatSymbols()
             symbols.groupingSeparator = '.'
             symbols.decimalSeparator = ','
             val moneyFormat = DecimalFormat("#,###.00 €", symbols)
 
-            itemView.date.text = exp.date
-            itemView.expense.text = moneyFormat.format(exp.amount.toDouble())
-            itemView.category.text = exp.category
-            itemView.comment.text = exp.comment
-            itemView.setOnClickListener { clickListener(exp)}
+            itemView.incDate.text = inc.date
+            itemView.incSalary.text = moneyFormat.format(inc.salary.toDouble())
+            itemView.incComment.text = inc.comment
+            itemView.setOnClickListener { clickListener(inc)}
         }
     }
 }

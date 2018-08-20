@@ -37,10 +37,10 @@ class WebServiceHandler {
                 conn.setRequestProperty("Cookie",
                         TextUtils.join(";", msCookieManager.cookieStore.cookies))
             }
-            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
 
             val printout = DataOutputStream(conn.outputStream)
-            printout.writeBytes(jsonParam.toString())
+            printout.write(jsonParam.toString().toByteArray(Charsets.UTF_8))
             printout.flush()
             printout.close()
 
