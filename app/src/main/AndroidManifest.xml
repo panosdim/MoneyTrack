@@ -20,6 +20,7 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -31,15 +32,17 @@
             android:name=".income.IncomeDetails"
             android:label="@string/title_activity_income_details"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".expense.ExpenseDetails"
             android:label="@string/title_activity_expense_details"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity
             android:name=".category.CategoryDetails"
             android:label="@string/title_activity_category_details"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".income.FilterIncome"
+            android:label="@string/filter_income"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
 

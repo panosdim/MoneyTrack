@@ -18,6 +18,7 @@ import com.panosdim.moneytrack.category.CategoryDetails
 import com.panosdim.moneytrack.expense.Expense
 import com.panosdim.moneytrack.expense.ExpenseAdapter
 import com.panosdim.moneytrack.expense.ExpenseDetails
+import com.panosdim.moneytrack.income.FilterIncome
 import com.panosdim.moneytrack.income.Income
 import com.panosdim.moneytrack.income.IncomeAdapter
 import com.panosdim.moneytrack.income.IncomeDetails
@@ -32,6 +33,7 @@ import org.json.JSONObject
 const val INCOME_CODE = 0
 const val EXPENSE_CODE = 1
 const val CATEGORY_CODE = 2
+const val FILTER_INCOME_CODE = 3
 
 class MainActivity : AppCompatActivity() {
 
@@ -73,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
 
-        fab.setOnClickListener { view ->
+        fabAdd.setOnClickListener { view ->
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(view!!.context, IncomeDetails::class.java)
@@ -88,7 +90,23 @@ class MainActivity : AppCompatActivity() {
                     startActivityForResult(intent, CATEGORY_CODE)
                 }
             }
+        }
 
+        fabSearch.setOnClickListener { view ->
+            when (tabs.selectedTabPosition) {
+                0 -> {
+                    val intent = Intent(view!!.context, FilterIncome::class.java)
+                    startActivityForResult(intent, FILTER_INCOME_CODE)
+                }
+                1 -> {
+                    val intent = Intent(view!!.context, ExpenseDetails::class.java)
+                    startActivityForResult(intent, EXPENSE_CODE)
+                }
+                2 -> {
+                    val intent = Intent(view!!.context, CategoryDetails::class.java)
+                    startActivityForResult(intent, CATEGORY_CODE)
+                }
+            }
         }
     }
 
@@ -107,6 +125,10 @@ class MainActivity : AppCompatActivity() {
 
             if (requestCode == EXPENSE_CODE) {
                 container.rvExpenses.adapter.notifyDataSetChanged()
+            }
+
+            if (requestCode == FILTER_INCOME_CODE) {
+                container.rvIncome.adapter.notifyDataSetChanged()
             }
         }
     }
