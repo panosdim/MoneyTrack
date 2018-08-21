@@ -102,32 +102,15 @@ class MainActivity : AppCompatActivity() {
         fabAdd.setOnClickListener { view ->
             when (tabs.selectedTabPosition) {
                 0 -> {
-                    val intent = Intent(view!!.context, IncomeDetails::class.java)
+                    val intent = Intent(this, IncomeDetails::class.java)
                     startActivityForResult(intent, INCOME_CODE)
                 }
                 1 -> {
-                    val intent = Intent(view!!.context, ExpenseDetails::class.java)
+                    val intent = Intent(this, ExpenseDetails::class.java)
                     startActivityForResult(intent, EXPENSE_CODE)
                 }
                 2 -> {
-                    val intent = Intent(view!!.context, CategoryDetails::class.java)
-                    startActivityForResult(intent, CATEGORY_CODE)
-                }
-            }
-        }
-
-        fabSearch.setOnClickListener { view ->
-            when (tabs.selectedTabPosition) {
-                0 -> {
-                    val intent = Intent(view!!.context, FilterIncome::class.java)
-                    startActivityForResult(intent, FILTER_INCOME_CODE)
-                }
-                1 -> {
-                    val intent = Intent(view!!.context, ExpenseDetails::class.java)
-                    startActivityForResult(intent, EXPENSE_CODE)
-                }
-                2 -> {
-                    val intent = Intent(view!!.context, CategoryDetails::class.java)
+                    val intent = Intent(this, CategoryDetails::class.java)
                     startActivityForResult(intent, CATEGORY_CODE)
                 }
             }
@@ -193,6 +176,24 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_logout -> {
             logout()
+            true
+        }
+
+        R.id.action_filter -> {
+            when (tabs.selectedTabPosition) {
+                0 -> {
+                    val intent = Intent(this, FilterIncome::class.java)
+                    startActivityForResult(intent, FILTER_INCOME_CODE)
+                }
+                1 -> {
+                    val intent = Intent(this, ExpenseDetails::class.java)
+                    startActivityForResult(intent, EXPENSE_CODE)
+                }
+                2 -> {
+                    val intent = Intent(this, CategoryDetails::class.java)
+                    startActivityForResult(intent, CATEGORY_CODE)
+                }
+            }
             true
         }
 

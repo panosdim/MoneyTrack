@@ -3,11 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.panosdim.moneytrack.MainActivity">
 
-    <!-- "Mark Favorite", should appear as action button if possible -->
+    <item
+        android:id="@+id/action_filter"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/filter"
+        app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/action_logout"
         android:icon="@drawable/ic_action_exit"
-        android:title="@string/logout"
+        android:title="@string/filter"
         app:showAsAction="ifRoom" />
 
 </menu>
