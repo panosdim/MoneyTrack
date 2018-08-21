@@ -8,10 +8,11 @@ import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Toast
-import com.panosdim.moneytrack.CATEGORY_MESSAGE
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.categoriesList
-import com.panosdim.moneytrack.network.PutJsonData
+import com.panosdim.moneytrack.network.CATEGORY_MESSAGE
+import com.panosdim.moneytrack.network.deleteCategory
+import com.panosdim.moneytrack.network.saveCategory
 import kotlinx.android.synthetic.main.activity_category_details.*
 import kotlinx.android.synthetic.main.content_category_details.*
 import org.json.JSONObject
@@ -33,7 +34,18 @@ class CategoryDetails : AppCompatActivity() {
 
         btnDelete.setOnClickListener {
             if (category.id != null) {
-                PutJsonData(::deleteCategoryTask, "php/delete_category.php").execute(category.toJson())
+                deleteCategory({
+                    val res = JSONObject(it)
+                    if (res.getString("status") != "error") {
+                        val returnIntent = Intent()
+                        categoriesList.remove(category)
+                        setResult(Activity.RESULT_OK, returnIntent)
+                        finish()
+                    }
+
+                    Toast.makeText(this, res.getString("message"),
+                            Toast.LENGTH_LONG).show()
+                }, category.toJson())
             } else {
                 Toast.makeText(this, "Category ID was not found",
                         Toast.LENGTH_LONG).show()
@@ -49,19 +61,6 @@ class CategoryDetails : AppCompatActivity() {
         }
 
         tvCategory.setText(category.category)
-    }
-
-    private fun deleteCategoryTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            val returnIntent = Intent()
-            categoriesList.remove(category)
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
-        }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -93,27 +92,25 @@ class CategoryDetails : AppCompatActivity() {
             focusView!!.requestFocus()
         } else {
             category.category = categoryValue
-            PutJsonData(::saveCategoryTask, "php/save_category.php").execute(category.toJson())
-        }
-    }
+            saveCategory({
+                val res = JSONObject(it)
+                if (res.getString("status") != "error") {
+                    if (category.id == null) {
+                        category.id = res.getString("id")
+                        categoriesList.add(category)
+                    } else {
+                        val index = categoriesList.indexOfFirst { it.id == category.id }
+                        categoriesList[index] = category
+                    }
+                    val returnIntent = Intent()
+                    setResult(Activity.RESULT_OK, returnIntent)
+                    finish()
+                }
 
-    private fun saveCategoryTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            if (category.id == null) {
-                category.id = res.getString("id")
-                categoriesList.add(category)
-            } else {
-                val index = categoriesList.indexOfFirst { it.id == category.id }
-                categoriesList[index] = category
-            }
-            val returnIntent = Intent()
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
+                Toast.makeText(this, res.getString("message"),
+                        Toast.LENGTH_LONG).show()
+            }, category.toJson())
         }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onBackPressed() {

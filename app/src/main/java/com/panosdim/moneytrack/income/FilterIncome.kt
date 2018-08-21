@@ -11,7 +11,7 @@ import android.view.View
 import com.panosdim.moneytrack.DecimalDigitsInputFilter
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.GetJsonData
+import com.panosdim.moneytrack.network.getIncome
 import kotlinx.android.synthetic.main.activity_filter_income.*
 import org.json.JSONArray
 import java.text.ParseException
@@ -156,7 +156,21 @@ class FilterIncome : AppCompatActivity() {
             mSalaryMax = ""
             mComment = ""
 
-            GetJsonData(::incomeTask).execute("php/get_income.php")
+            getIncome {
+                if (it.isNotEmpty()) {
+                    incomeList.clear()
+                    // Convert JSON response to List<Income>
+                    val resp = JSONArray(it)
+                    for (inc in 0 until resp.length()) {
+                        val item = resp.getJSONObject(inc)
+                        incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                    }
+                }
+
+                val returnIntent = Intent()
+                setResult(Activity.RESULT_OK, returnIntent)
+                finish()
+            }
         }
     }
 

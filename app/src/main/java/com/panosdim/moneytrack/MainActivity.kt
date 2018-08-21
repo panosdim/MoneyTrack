@@ -22,7 +22,7 @@ import com.panosdim.moneytrack.income.FilterIncome
 import com.panosdim.moneytrack.income.Income
 import com.panosdim.moneytrack.income.IncomeAdapter
 import com.panosdim.moneytrack.income.IncomeDetails
-import com.panosdim.moneytrack.network.GetJsonData
+import com.panosdim.moneytrack.network.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_categories.view.*
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
@@ -53,18 +53,6 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
 
-        if (expensesList.size == 0) {
-            GetJsonData(::expenseTask).execute("php/get_expense.php")
-        }
-
-        if (incomeList.size == 0) {
-            GetJsonData(::incomeTask).execute("php/get_income.php")
-        }
-
-        if (categoriesList.size == 0) {
-            GetJsonData(::categoriesTask).execute("php/get_categories.php")
-        }
-
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
@@ -74,6 +62,42 @@ class MainActivity : AppCompatActivity() {
 
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
+
+        if (expensesList.size == 0) {
+            getExpenses(::expenseTask)
+        }
+
+        if (incomeList.size == 0) {
+            getIncome {
+                if (it.isNotEmpty()) {
+                    // Convert JSON response to List<Income>
+                    val resp = JSONArray(it)
+                    for (inc in 0 until resp.length()) {
+                        val item = resp.getJSONObject(inc)
+                        incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                    }
+                    if (container.rvIncome != null) {
+                        container.rvIncome.adapter.notifyDataSetChanged()
+                    }
+                }
+            }
+        }
+
+        if (categoriesList.size == 0) {
+            getCategories {
+                if (it.isNotEmpty()) {
+                    // Convert JSON response to List<Category>
+                    val resp = JSONArray(it)
+                    for (inc in 0 until resp.length()) {
+                        val item = resp.getJSONObject(inc)
+                        categoriesList.add(Category(item.getString("id"), item.getString("category")))
+                    }
+                    if (container.rvCategories != null) {
+                        container.rvCategories.adapter.notifyDataSetChanged()
+                    }
+                }
+            }
+        }
 
         fabAdd.setOnClickListener { view ->
             when (tabs.selectedTabPosition) {
@@ -110,13 +134,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkForActiveSession {
+            val res = JSONObject(it)
+            if (!res.getBoolean("loggedIn")) {
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                intent.putExtra(LOGGEDOUT_MESSAGE, true)
+                startActivity(intent)
+            }
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == CATEGORY_CODE) {
                 container.rvCategories.adapter.notifyDataSetChanged()
                 // Fetch again expenses if we change category name
                 expensesList.clear()
-                GetJsonData(::expenseTask).execute("php/get_expense.php")
+                getExpenses(::expenseTask)
             }
 
             if (requestCode == INCOME_CODE) {
@@ -133,36 +170,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun categoriesTask(result: String) {
-        if (!result.isEmpty()) {
-            // Convert JSON response to List<Category>
-            val resp = JSONArray(result)
-            for (inc in 0 until resp.length()) {
-                val item = resp.getJSONObject(inc)
-                categoriesList.add(Category(item.getString("id"), item.getString("category")))
-            }
-            if (container.rvCategories != null) {
-                container.rvCategories.adapter.notifyDataSetChanged()
-            }
-        }
-    }
-
-    private fun incomeTask(result: String) {
-        if (!result.isEmpty()) {
-            // Convert JSON response to List<Income>
-            val resp = JSONArray(result)
-            for (inc in 0 until resp.length()) {
-                val item = resp.getJSONObject(inc)
-                incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
-            }
-            if (container.rvIncome != null) {
-                container.rvIncome.adapter.notifyDataSetChanged()
-            }
-        }
-    }
-
     private fun expenseTask(result: String) {
-        if (!result.isEmpty()) {
+        if (result.isNotEmpty()) {
             // Convert JSON response to List<Income>
             val resp = JSONArray(result)
             for (inc in 0 until resp.length()) {
@@ -197,19 +206,17 @@ class MainActivity : AppCompatActivity() {
     private fun logout() {
         Toast.makeText(this, "Logging you out!",
                 Toast.LENGTH_LONG).show()
-        GetJsonData(::logoutTask).execute("php/logout.php")
-    }
-
-    private fun logoutTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getBoolean("loggedout")) {
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            intent.putExtra(LOGGEDOUT_MESSAGE, true)
-            startActivity(intent)
-        } else {
-            Toast.makeText(this, "Fail to log you out!",
-                    Toast.LENGTH_LONG).show()
+        logout {
+            val res = JSONObject(it)
+            if (res.getBoolean("loggedOut")) {
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                intent.putExtra(LOGGEDOUT_MESSAGE, true)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Fail to log you out!",
+                        Toast.LENGTH_LONG).show()
+            }
         }
     }
 

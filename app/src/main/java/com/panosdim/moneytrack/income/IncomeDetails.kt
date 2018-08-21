@@ -11,10 +11,11 @@ import android.text.InputFilter
 import android.view.View
 import android.widget.Toast
 import com.panosdim.moneytrack.DecimalDigitsInputFilter
-import com.panosdim.moneytrack.INCOME_MESSAGE
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.PutJsonData
+import com.panosdim.moneytrack.network.INCOME_MESSAGE
+import com.panosdim.moneytrack.network.deleteIncome
+import com.panosdim.moneytrack.network.saveIncome
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
 import org.json.JSONObject
@@ -70,7 +71,18 @@ class IncomeDetails : AppCompatActivity() {
 
         btnDelete.setOnClickListener {
             if (income.id != null) {
-                PutJsonData(::deleteIncomeTask, "php/delete_income.php").execute(income.toJson())
+                deleteIncome({
+                    val res = JSONObject(it)
+                    if (res.getString("status") != "error") {
+                        val returnIntent = Intent()
+                        incomeList.remove(income)
+                        setResult(Activity.RESULT_OK, returnIntent)
+                        finish()
+                    }
+
+                    Toast.makeText(this, res.getString("message"),
+                            Toast.LENGTH_LONG).show()
+                }, income.toJson())
             } else {
                 Toast.makeText(this, "Income ID was not found",
                         Toast.LENGTH_LONG).show()
@@ -88,19 +100,6 @@ class IncomeDetails : AppCompatActivity() {
         incDate.setText(income.date)
         incSalary.setText(income.salary)
         incComment.setText(income.comment)
-    }
-
-    private fun deleteIncomeTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            val returnIntent = Intent()
-            incomeList.remove(income)
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
-        }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -155,28 +154,26 @@ class IncomeDetails : AppCompatActivity() {
             income.salary = incSalary.text.toString()
             income.comment = incComment.text.toString()
 
-            PutJsonData(::saveIncomeTask, "php/save_income.php").execute(income.toJson())
-        }
-    }
+            saveIncome({
+                val res = JSONObject(it)
+                if (res.getString("status") != "error") {
+                    if (income.id == null) {
+                        income.id = res.getString("id")
+                        incomeList.add(income)
+                    } else {
+                        val index = incomeList.indexOfFirst { it.id == income.id }
+                        incomeList[index] = income
+                    }
+                    incomeList.sortByDescending { it.date }
+                    val returnIntent = Intent()
+                    setResult(Activity.RESULT_OK, returnIntent)
+                    finish()
+                }
 
-    private fun saveIncomeTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            if (income.id == null) {
-                income.id = res.getString("id")
-                incomeList.add(income)
-            } else {
-                val index = incomeList.indexOfFirst { it.id == income.id }
-                incomeList[index] = income
-            }
-            incomeList.sortByDescending { it.date }
-            val returnIntent = Intent()
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
+                Toast.makeText(this, res.getString("message"),
+                        Toast.LENGTH_LONG).show()
+            }, income.toJson())
         }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onBackPressed() {

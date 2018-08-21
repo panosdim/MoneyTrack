@@ -11,16 +11,11 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.Toast
-import com.panosdim.moneytrack.network.GetJsonData
-import com.panosdim.moneytrack.network.PutJsonData
+import com.panosdim.moneytrack.network.LOGGEDOUT_MESSAGE
+import com.panosdim.moneytrack.network.checkForActiveSession
+import com.panosdim.moneytrack.network.login
 import kotlinx.android.synthetic.main.activity_login.*
-import org.json.JSONException
 import org.json.JSONObject
-
-const val LOGGEDOUT_MESSAGE = "com.panosdim.moneytrack.LOGGEDOUT"
-const val EXPENSE_MESSAGE = "com.panosdim.moneytrack.EXPENSE"
-const val INCOME_MESSAGE = "com.panosdim.moneytrack.INCOME"
-const val CATEGORY_MESSAGE = "com.panosdim.moneytrack.CATEGORY"
 
 /**
  * A login screen that offers login via username/password.
@@ -54,24 +49,18 @@ class LoginActivity : AppCompatActivity() {
             mSnackbar = Snackbar.make(root_layout, "Checking for active session!", Snackbar.LENGTH_LONG)
             mSnackbar.show()
             showProgress(true)
-            GetJsonData(::checkSessionTask).execute("php/session.php")
-        }
-    }
-
-    private fun checkSessionTask(result: String) {
-        try {
-            val resp = JSONObject(result)
-            if (resp.getBoolean("loggedIn")) {
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                mSnackbar.dismiss()
-                startActivity(intent)
-            } else {
-                showProgress(false)
-                mSnackbar.dismiss()
+            checkForActiveSession {
+                val resp = JSONObject(it)
+                if (resp.getBoolean("loggedIn")) {
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    mSnackbar.dismiss()
+                    startActivity(intent)
+                } else {
+                    showProgress(false)
+                    mSnackbar.dismiss()
+                }
             }
-        } catch (e: JSONException) {
-            e.printStackTrace()
         }
     }
 
@@ -115,30 +104,22 @@ class LoginActivity : AppCompatActivity() {
             // perform the user login attempt.
             showProgress(true)
             val jsonParam = JSONObject()
-            try {
-                jsonParam.put("username", username)
-                jsonParam.put("password", password)
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-            PutJsonData(::loginTaskCallback, "php/login.php").execute(jsonParam)
-        }
-    }
+            jsonParam.put("username", username)
+            jsonParam.put("password", password)
 
-    private fun loginTaskCallback(result: String) {
-        showProgress(false)
-        try {
-            val resp = JSONObject(result)
-            if (resp.getString("status") != "error") {
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-            } else {
-                Toast.makeText(this, "Login Failed. Please check username and password!",
-                        Toast.LENGTH_LONG).show()
-            }
-        } catch (e: JSONException) {
-            e.printStackTrace()
+            login({
+                showProgress(false)
+
+                val resp = JSONObject(it)
+                if (resp.getString("status") != "error") {
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "Login Failed. Please check username and password!",
+                            Toast.LENGTH_LONG).show()
+                }
+            }, jsonParam)
         }
     }
 

@@ -11,9 +11,14 @@ import android.text.InputFilter
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import com.panosdim.moneytrack.*
+import com.panosdim.moneytrack.DecimalDigitsInputFilter
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.category.Category
-import com.panosdim.moneytrack.network.PutJsonData
+import com.panosdim.moneytrack.expensesList
+import com.panosdim.moneytrack.network.EXPENSE_MESSAGE
+import com.panosdim.moneytrack.network.deleteExpense
+import com.panosdim.moneytrack.network.saveExpense
 import kotlinx.android.synthetic.main.activity_expense_details.*
 import kotlinx.android.synthetic.main.content_expense_details.*
 import org.json.JSONObject
@@ -74,7 +79,18 @@ class ExpenseDetails : AppCompatActivity() {
 
         btnDelete.setOnClickListener {
             if (expense.id != null) {
-                PutJsonData(::deleteExpenseTask, "php/delete_expense.php").execute(expense.toJson())
+                deleteExpense({
+                    val res = JSONObject(it)
+                    if (res.getString("status") != "error") {
+                        val returnIntent = Intent()
+                        expensesList.remove(expense)
+                        setResult(Activity.RESULT_OK, returnIntent)
+                        finish()
+                    }
+
+                    Toast.makeText(this, res.getString("message"),
+                            Toast.LENGTH_LONG).show()
+                }, expense.toJson())
             } else {
                 Toast.makeText(this, "Expense ID was not found",
                         Toast.LENGTH_LONG).show()
@@ -96,19 +112,6 @@ class ExpenseDetails : AppCompatActivity() {
         })
         expCategory.setSelection(selectedItem)
         expComment.setText(expense.comment)
-    }
-
-    private fun deleteExpenseTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            val returnIntent = Intent()
-            expensesList.remove(expense)
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
-        }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -164,28 +167,26 @@ class ExpenseDetails : AppCompatActivity() {
             expense.category = expCategory.selectedItem.toString()
             expense.comment = expComment.text.toString()
 
-            PutJsonData(::saveExpenseTask, "php/save_expense.php").execute(expense.toJson())
-        }
-    }
+            saveExpense({
+                val res = JSONObject(it)
+                if (res.getString("status") != "error") {
+                    if (expense.id == null) {
+                        expense.id = res.getString("id")
+                        expensesList.add(expense)
+                    } else {
+                        val index = expensesList.indexOfFirst { it.id == expense.id }
+                        expensesList[index] = expense
+                    }
+                    expensesList.sortByDescending { it.date }
+                    val returnIntent = Intent()
+                    setResult(Activity.RESULT_OK, returnIntent)
+                    finish()
+                }
 
-    private fun saveExpenseTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getString("status") != "error") {
-            if (expense.id == null) {
-                expense.id = res.getString("id")
-                expensesList.add(expense)
-            } else {
-                val index = expensesList.indexOfFirst { it.id == expense.id }
-                expensesList[index] = expense
-            }
-            expensesList.sortByDescending { it.date }
-            val returnIntent = Intent()
-            setResult(Activity.RESULT_OK, returnIntent)
-            finish()
+                Toast.makeText(this, res.getString("message"),
+                        Toast.LENGTH_LONG).show()
+            }, expense.toJson())
         }
-
-        Toast.makeText(this, res.getString("message"),
-                Toast.LENGTH_LONG).show()
     }
 
     override fun onBackPressed() {
