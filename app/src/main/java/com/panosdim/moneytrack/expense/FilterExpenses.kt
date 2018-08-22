@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack.income
+package com.panosdim.moneytrack.expense
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -8,17 +8,20 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.InputFilter
 import android.view.View
+import android.widget.ArrayAdapter
 import com.panosdim.moneytrack.DecimalDigitsInputFilter
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.getIncome
-import kotlinx.android.synthetic.main.activity_filter_income.*
+import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.category.Category
+import com.panosdim.moneytrack.expensesList
+import com.panosdim.moneytrack.network.getExpenses
+import kotlinx.android.synthetic.main.activity_filter_expenses.*
 import org.json.JSONArray
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class FilterIncome : AppCompatActivity() {
+class FilterExpenses : AppCompatActivity() {
 
     private lateinit var minDatePickerDialog: DatePickerDialog
     private lateinit var maxDatePickerDialog: DatePickerDialog
@@ -26,17 +29,25 @@ class FilterIncome : AppCompatActivity() {
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_filter_income)
+        setContentView(R.layout.activity_filter_expenses)
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         supportActionBar!!.setDisplayShowHomeEnabled(true)
 
-        salaryMin.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
-        salaryMax.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
+        expenseMin.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
+        expenseMax.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
-        // Store list of income before filtered
+        // Initialize category spinner data
+        val spinnerData = ArrayAdapter<Category>(this, android.R.layout.simple_spinner_dropdown_item, categoriesList.toList())
+        // Add Select Category as first element only the first time
+        if (spinnerData.count == categoriesList.size ) {
+            spinnerData.insert(Category(category = "Select Category"), 0)
+        }
+        expCategory.adapter = spinnerData
+
+        // Store list of expenses before filtered
         if (!mFiltersSet) {
-            mIncomeList = incomeList.toList()
+            mExpensesList = expensesList.toList()
         }
 
         dateMin.setOnClickListener {
@@ -57,7 +68,7 @@ class FilterIncome : AppCompatActivity() {
             val cDay = c.get(Calendar.DAY_OF_MONTH)
 
             // date picker dialog
-            minDatePickerDialog = DatePickerDialog(this@FilterIncome,
+            minDatePickerDialog = DatePickerDialog(this@FilterExpenses,
                     DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                         // set day of month , month and year value in the edit text
                         c.set(year, month, dayOfMonth, 0, 0)
@@ -84,7 +95,7 @@ class FilterIncome : AppCompatActivity() {
             val cDay = c.get(Calendar.DAY_OF_MONTH)
 
             // date picker dialog
-            maxDatePickerDialog = DatePickerDialog(this@FilterIncome,
+            maxDatePickerDialog = DatePickerDialog(this@FilterExpenses,
                     DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                         // set day of month , month and year value in the edit text
                         c.set(year, month, dayOfMonth, 0, 0)
@@ -95,14 +106,18 @@ class FilterIncome : AppCompatActivity() {
 
         dateMin.setText(mDateMin)
         dateMax.setText(mDateMax)
-        salaryMin.setText(mSalaryMin)
-        salaryMax.setText(mSalaryMax)
+        expenseMin.setText(mExpenseMin)
+        expenseMax.setText(mExpenseMax)
+        val selectedItem = spinnerData.getPosition(categoriesList.find {
+            it.category == mCategory
+        })
+        expCategory.setSelection(selectedItem)
         commentSearch.setText(mComment)
 
         btnSetFilters.setOnClickListener {
             if (mFiltersSet) {
-                incomeList.clear()
-                incomeList.addAll(mIncomeList)
+                expensesList.clear()
+                expensesList.addAll(mExpensesList)
             }
             val df = SimpleDateFormat("yyyy-MM-dd")
 
@@ -112,7 +127,7 @@ class FilterIncome : AppCompatActivity() {
                 mDateMin = dateMin.text.toString()
                 if (mDateMin.isNotEmpty()) {
                     val parsedMinDate = df.parse(mDateMin)
-                    incomeList.retainAll {
+                    expensesList.retainAll {
                         val itDate = df.parse(it.date)
                         itDate.time >= parsedMinDate.time
                     }
@@ -122,37 +137,45 @@ class FilterIncome : AppCompatActivity() {
                 mDateMax = dateMax.text.toString()
                 if (mDateMax.isNotEmpty()) {
                     val parsedMaxDate = df.parse(mDateMax)
-                    incomeList.retainAll {
+                    expensesList.retainAll {
                         val itDate = df.parse(it.date)
                         itDate.time <= parsedMaxDate.time
                     }
                 }
 
                 // Min Salary
-                mSalaryMin = salaryMin.text.toString()
-                if (mSalaryMin.isNotEmpty()) {
-                    incomeList.retainAll {
-                        it.salary.toDouble() >= mSalaryMin.toDouble()
+                mExpenseMin = expenseMin.text.toString()
+                if (mExpenseMin.isNotEmpty()) {
+                    expensesList.retainAll {
+                        it.amount.toDouble() >= mExpenseMin.toDouble()
                     }
                 }
 
                 // Max Salary
-                mSalaryMax = salaryMax.text.toString()
-                if (mSalaryMax.isNotEmpty()) {
-                    incomeList.retainAll {
-                        it.salary.toDouble() <= mSalaryMax.toDouble()
+                mExpenseMax = expenseMax.text.toString()
+                if (mExpenseMax.isNotEmpty()) {
+                    expensesList.retainAll {
+                        it.amount.toDouble() <= mExpenseMax.toDouble()
+                    }
+                }
+
+                // Category
+                mCategory = expCategory.selectedItem.toString()
+                if (expCategory.selectedItemPosition != 0) {
+                    expensesList.retainAll {
+                        it.category == mCategory
                     }
                 }
 
                 // Comment Search
                 mComment = commentSearch.text.toString()
                 if (mComment.isNotEmpty()) {
-                    incomeList.retainAll {
+                    expensesList.retainAll {
                         it.comment.contains(mComment)
                     }
                 }
 
-                mFiltersSet = mDateMin.isNotEmpty() || mDateMax.isNotEmpty() || mSalaryMin.isNotEmpty() || mSalaryMax.isNotEmpty() || mComment.isNotEmpty()
+                mFiltersSet = mDateMin.isNotEmpty() || mDateMax.isNotEmpty() || mExpenseMin.isNotEmpty() || mExpenseMax.isNotEmpty() || expCategory.selectedItemPosition != 0 || mComment.isNotEmpty()
 
                 val returnIntent = Intent()
                 setResult(Activity.RESULT_OK, returnIntent)
@@ -163,19 +186,21 @@ class FilterIncome : AppCompatActivity() {
         btnClearFilters.setOnClickListener {
             mDateMin = ""
             mDateMax = ""
-            mSalaryMin = ""
-            mSalaryMax = ""
+            mExpenseMin = ""
+            mExpenseMax = ""
+            mCategory = ""
             mComment = ""
+            expCategory.setSelection(0)
             mFiltersSet = false
 
-            getIncome {
+            getExpenses {
                 if (it.isNotEmpty()) {
-                    incomeList.clear()
+                    expensesList.clear()
                     // Convert JSON response to List<Income>
                     val resp = JSONArray(it)
                     for (inc in 0 until resp.length()) {
                         val item = resp.getJSONObject(inc)
-                        incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                        expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
                     }
                 }
 
@@ -251,10 +276,11 @@ class FilterIncome : AppCompatActivity() {
     companion object {
         private var mDateMin = ""
         private var mDateMax = ""
-        private var mSalaryMin = ""
-        private var mSalaryMax = ""
+        private var mExpenseMin = ""
+        private var mExpenseMax = ""
+        private var mCategory = ""
         private var mComment = ""
-        private var mIncomeList = listOf<Income>()
+        private var mExpensesList = listOf<Expense>()
         private var mFiltersSet = false
     }
 }

@@ -18,6 +18,7 @@ import com.panosdim.moneytrack.category.CategoryDetails
 import com.panosdim.moneytrack.expense.Expense
 import com.panosdim.moneytrack.expense.ExpenseAdapter
 import com.panosdim.moneytrack.expense.ExpenseDetails
+import com.panosdim.moneytrack.expense.FilterExpenses
 import com.panosdim.moneytrack.income.FilterIncome
 import com.panosdim.moneytrack.income.Income
 import com.panosdim.moneytrack.income.IncomeAdapter
@@ -34,6 +35,7 @@ const val INCOME_CODE = 0
 const val EXPENSE_CODE = 1
 const val CATEGORY_CODE = 2
 const val FILTER_INCOME_CODE = 3
+const val FILTER_EXPENSE_CODE = 4
 
 class MainActivity : AppCompatActivity() {
 
@@ -150,6 +152,10 @@ class MainActivity : AppCompatActivity() {
             if (requestCode == FILTER_INCOME_CODE) {
                 container.rvIncome.adapter.notifyDataSetChanged()
             }
+
+            if (requestCode == FILTER_EXPENSE_CODE) {
+                container.rvExpenses.adapter.notifyDataSetChanged()
+            }
         }
     }
 
@@ -186,12 +192,8 @@ class MainActivity : AppCompatActivity() {
                     startActivityForResult(intent, FILTER_INCOME_CODE)
                 }
                 1 -> {
-                    val intent = Intent(this, ExpenseDetails::class.java)
-                    startActivityForResult(intent, EXPENSE_CODE)
-                }
-                2 -> {
-                    val intent = Intent(this, CategoryDetails::class.java)
-                    startActivityForResult(intent, CATEGORY_CODE)
+                    val intent = Intent(this, FilterExpenses::class.java)
+                    startActivityForResult(intent, FILTER_EXPENSE_CODE)
                 }
             }
             true

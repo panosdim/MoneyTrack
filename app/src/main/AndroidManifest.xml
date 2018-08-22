@@ -44,6 +44,11 @@
             android:name=".income.FilterIncome"
             android:label="@string/filter_income"
             android:theme="@style/AppTheme.NoActionBar" />
+
+        <activity
+            android:name=".expense.FilterExpenses"
+            android:label="@string/filter_expenses"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>
