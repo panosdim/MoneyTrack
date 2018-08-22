@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        fabAdd.setOnClickListener { view ->
+        fabAdd.setOnClickListener { _ ->
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(this, IncomeDetails::class.java)

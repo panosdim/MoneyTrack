@@ -4,18 +4,13 @@
     <!-- Strings related to login -->
     <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="tab_text_1">Income</string>
     <string name="tab_text_2">Expenses</string>
     <string name="tab_text_3">Categories</string>
-    <string name="action_settings">Settings</string>
-    <string name="section_format">Hello World from section: %1$d</string>
-    <string name="logout">Logout</string>
     <string name="date">Date</string>
     <string name="salary">Salary</string>
     <string name="comment">Comment</string>
@@ -30,4 +25,5 @@
     <string name="filter_income">Filter Income</string>
     <string name="filter">Filter</string>
     <string name="filter_expenses">Filter Expenses</string>
+    <string name="minDateGraterMaxDate">Date Min is greater than Date Max</string>
 </resources>
