@@ -8,11 +8,11 @@
     tools:context=".MainActivity$PlaceholderFragment">
 
     <TextView
-        android:id="@+id/lblDate"
+        android:id="@+id/lblExpDate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="@string/date"
         android:textAlignment="center"
         android:textStyle="bold"
@@ -37,7 +37,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="@string/expense"
         android:textAlignment="textEnd"
         android:textStyle="bold"
@@ -54,11 +54,11 @@
         app:layout_constraintGuide_percent="0.45" />
 
     <TextView
-        android:id="@+id/lblComment"
+        android:id="@+id/lblExpComment"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="@string/comment"
         android:textAlignment="center"
         android:textStyle="bold"
@@ -76,7 +76,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lblDate" />
+        app:layout_constraintTop_toBottomOf="@+id/lblExpDate" />
 
     <TextView
         android:id="@+id/lblCategory"
@@ -84,7 +84,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="@string/category"
         android:textAlignment="center"
         android:textStyle="bold"

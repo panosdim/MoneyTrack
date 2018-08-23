@@ -31,6 +31,7 @@ import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
 import org.json.JSONObject
 
+
 const val INCOME_CODE = 0
 const val EXPENSE_CODE = 1
 const val CATEGORY_CODE = 2
@@ -282,11 +283,82 @@ class MainActivity : AppCompatActivity() {
             categoryRV.layoutManager = LinearLayoutManager(categoryView.context)
             categoryRV.adapter = categoryViewAdapter
 
+
+            // Sort Income By Date, Salary and Comment
+            incomeView.lblIncDate.setOnClickListener {
+                sortIncome(SortField.DATE)
+                incomeRV.adapter.notifyDataSetChanged()
+            }
+
+            incomeView.lblSalary.setOnClickListener {
+                sortIncome(SortField.SALARY)
+                incomeRV.adapter.notifyDataSetChanged()
+            }
+
+            incomeView.lblIncComment.setOnClickListener {
+                sortIncome(SortField.COMMENT)
+                incomeRV.adapter.notifyDataSetChanged()
+            }
+
+            // Sort Expenses By Date, Expense, Category and Comment
+            expenseView.lblExpDate.setOnClickListener {
+                sortExpenses(SortField.DATE)
+                expenseRV.adapter.notifyDataSetChanged()
+            }
+
+            expenseView.lblExpense.setOnClickListener {
+                sortExpenses(SortField.EXPENSE)
+                expenseRV.adapter.notifyDataSetChanged()
+            }
+
+            expenseView.lblCategory.setOnClickListener {
+                sortExpenses(SortField.CATEGORY)
+                expenseRV.adapter.notifyDataSetChanged()
+            }
+
+            expenseView.lblExpComment.setOnClickListener {
+                sortExpenses(SortField.COMMENT)
+                expenseRV.adapter.notifyDataSetChanged()
+            }
+
             return when (arguments?.getInt(ARG_SECTION_NUMBER)) {
                 1 -> incomeView
                 2 -> expenseView
                 3 -> categoryView
                 else -> incomeView
+            }
+        }
+
+        private fun sortIncome(field: SortField) {
+            if (mIncomeSorted.sorted == field) {
+                incomeList.reverse()
+                mIncomeSorted.direction = if (mIncomeSorted.direction == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
+            } else {
+                mIncomeSorted.sorted = field
+                mIncomeSorted.direction = if (field == SortField.DATE) SortDirection.DESCENDING else SortDirection.ASCENDING
+                when (field) {
+                    SortField.DATE -> incomeList.sortByDescending { it.date }
+                    SortField.SALARY -> incomeList.sortBy { it.salary.toDouble() }
+                    SortField.COMMENT -> incomeList.sortBy { it.comment }
+                    else -> { }
+                }
+            }
+        }
+
+        private fun sortExpenses(field: SortField) {
+            if (mExpensesSorted.sorted == field) {
+                expensesList.reverse()
+                mExpensesSorted.direction = if (mExpensesSorted.direction == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
+            } else {
+                mExpensesSorted.sorted = field
+                mExpensesSorted.direction = if (field == SortField.DATE) SortDirection.DESCENDING else SortDirection.ASCENDING
+                when (field) {
+                    SortField.DATE -> expensesList.sortByDescending { it.date }
+                    SortField.EXPENSE -> expensesList.sortBy { it.amount.toDouble() }
+                    SortField.CATEGORY -> expensesList.sortBy { it.category }
+                    SortField.COMMENT -> expensesList.sortBy { it.comment }
+                    else -> { }
+                }
             }
         }
 
@@ -320,6 +392,8 @@ class MainActivity : AppCompatActivity() {
              * fragment.
              */
             private const val ARG_SECTION_NUMBER = "section_number"
+            private var mIncomeSorted = SortedBy(SortField.DATE, SortDirection.DESCENDING)
+            private var mExpensesSorted = SortedBy(SortField.DATE, SortDirection.DESCENDING)
 
             /**
              * Returns a new instance of this fragment for the given section
@@ -334,4 +408,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    enum class SortField {
+        DATE,
+        SALARY,
+        COMMENT,
+        EXPENSE,
+        CATEGORY
+    }
+
+    enum class SortDirection {
+        ASCENDING,
+        DESCENDING
+    }
+
+    data class SortedBy(var sorted: SortField, var direction: SortDirection)
 }
