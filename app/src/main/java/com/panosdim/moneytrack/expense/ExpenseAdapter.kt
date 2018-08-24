@@ -35,7 +35,7 @@ class ExpenseAdapter (private val expenseItemList: List<Expense>, private val cl
             val symbols = DecimalFormatSymbols()
             symbols.groupingSeparator = '.'
             symbols.decimalSeparator = ','
-            val moneyFormat = DecimalFormat("#,###.00 €", symbols)
+            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
 
             itemView.date.text = exp.date
             itemView.expense.text = moneyFormat.format(exp.amount.toDouble())

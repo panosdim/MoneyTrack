@@ -1,5 +1,6 @@
 package com.panosdim.moneytrack
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -30,6 +31,8 @@ import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.android.synthetic.main.fragment_income.view.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 
 
 const val INCOME_CODE = 0
@@ -80,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                         incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
                     }
                     container.rvIncome?.adapter?.notifyDataSetChanged()
+                    calculateIncomeTotal()
                 }
             }
         }
@@ -126,6 +130,9 @@ class MainActivity : AppCompatActivity() {
                 intent.putExtra(LOGGEDOUT_MESSAGE, true)
                 startActivity(intent)
             }
+
+            calculateIncomeTotal()
+            calculateExpensesTotal()
         }
     }
 
@@ -140,20 +147,54 @@ class MainActivity : AppCompatActivity() {
 
             if (requestCode == INCOME_CODE) {
                 container.rvIncome.adapter.notifyDataSetChanged()
+                calculateIncomeTotal()
             }
 
             if (requestCode == EXPENSE_CODE) {
                 container.rvExpenses.adapter.notifyDataSetChanged()
+                calculateExpensesTotal()
             }
 
             if (requestCode == FILTER_INCOME_CODE) {
                 container.rvIncome.adapter.notifyDataSetChanged()
+                calculateIncomeTotal()
             }
 
             if (requestCode == FILTER_EXPENSE_CODE) {
                 container.rvExpenses.adapter.notifyDataSetChanged()
+                calculateExpensesTotal()
             }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun calculateIncomeTotal() {
+        var total = 0.0
+        for (income in incomeList) {
+            total += income.salary.toDouble()
+        }
+
+        val symbols = DecimalFormatSymbols()
+        symbols.groupingSeparator = '.'
+        symbols.decimalSeparator = ','
+        val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+
+        container.incTotal?.text = "${getString(R.string.total_income)} ${moneyFormat.format(total)}"
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun calculateExpensesTotal() {
+        var total = 0.0
+        for (expense in expensesList) {
+            total += expense.amount.toDouble()
+        }
+
+        val symbols = DecimalFormatSymbols()
+        symbols.groupingSeparator = '.'
+        symbols.decimalSeparator = ','
+        val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+
+        container.expTotal?.text = "${getString(R.string.total_expenses)} ${moneyFormat.format(total)}"
     }
 
     private fun expenseTask(result: String) {
@@ -165,6 +206,7 @@ class MainActivity : AppCompatActivity() {
                 expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
             }
             container.rvExpenses?.adapter?.notifyDataSetChanged()
+            calculateExpensesTotal()
         }
     }
 
@@ -252,74 +294,112 @@ class MainActivity : AppCompatActivity() {
         override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                                   savedInstanceState: Bundle?): View? {
 
-            incomeView = inflater.inflate(R.layout.fragment_income, container, false)
-            incomeViewAdapter = IncomeAdapter(incomeList) { incItem: Income -> incomeItemClicked(incItem) }
-
-            val incomeRV = incomeView.rvIncome
-            incomeRV.setHasFixedSize(true)
-            incomeRV.layoutManager = LinearLayoutManager(incomeView.context)
-            incomeRV.adapter = incomeViewAdapter
-
-            expenseView = inflater.inflate(R.layout.fragment_expenses, container, false)
-            expenseViewAdapter = ExpenseAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
-
-            val expenseRV = expenseView.rvExpenses
-            expenseRV.setHasFixedSize(true)
-            expenseRV.layoutManager = LinearLayoutManager(expenseView.context)
-            expenseRV.adapter = expenseViewAdapter
-
-            categoryView = inflater.inflate(R.layout.fragment_categories, container, false)
-            categoryViewAdapter = CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
-
-            val categoryRV = categoryView.rvCategories
-            categoryRV.setHasFixedSize(true)
-            categoryRV.layoutManager = LinearLayoutManager(categoryView.context)
-            categoryRV.adapter = categoryViewAdapter
-
-
-            // Sort Income By Date, Salary and Comment
-            incomeView.lblIncDate.setOnClickListener {
-                sortIncome(SortField.DATE)
-                incomeRV.adapter.notifyDataSetChanged()
-            }
-
-            incomeView.lblSalary.setOnClickListener {
-                sortIncome(SortField.SALARY)
-                incomeRV.adapter.notifyDataSetChanged()
-            }
-
-            incomeView.lblIncComment.setOnClickListener {
-                sortIncome(SortField.COMMENT)
-                incomeRV.adapter.notifyDataSetChanged()
-            }
-
-            // Sort Expenses By Date, Expense, Category and Comment
-            expenseView.lblExpDate.setOnClickListener {
-                sortExpenses(SortField.DATE)
-                expenseRV.adapter.notifyDataSetChanged()
-            }
-
-            expenseView.lblExpense.setOnClickListener {
-                sortExpenses(SortField.EXPENSE)
-                expenseRV.adapter.notifyDataSetChanged()
-            }
-
-            expenseView.lblCategory.setOnClickListener {
-                sortExpenses(SortField.CATEGORY)
-                expenseRV.adapter.notifyDataSetChanged()
-            }
-
-            expenseView.lblExpComment.setOnClickListener {
-                sortExpenses(SortField.COMMENT)
-                expenseRV.adapter.notifyDataSetChanged()
-            }
-
             return when (arguments?.getInt(ARG_SECTION_NUMBER)) {
-                1 -> incomeView
-                2 -> expenseView
-                3 -> categoryView
-                else -> incomeView
+                1 -> {
+                    incomeView = inflater.inflate(R.layout.fragment_income, container, false)
+                    incomeViewAdapter = IncomeAdapter(incomeList) { incItem: Income -> incomeItemClicked(incItem) }
+
+                    val incomeRV = incomeView.rvIncome
+                    incomeRV.setHasFixedSize(true)
+                    incomeRV.layoutManager = LinearLayoutManager(incomeView.context)
+                    incomeRV.adapter = incomeViewAdapter
+
+                    // Sort Income By Date, Salary and Comment
+                    incomeView.lblIncDate.setOnClickListener {
+                        sortIncome(SortField.DATE)
+                        incomeRV.adapter.notifyDataSetChanged()
+                    }
+
+                    incomeView.lblSalary.setOnClickListener {
+                        sortIncome(SortField.SALARY)
+                        incomeRV.adapter.notifyDataSetChanged()
+                    }
+
+                    incomeView.lblIncComment.setOnClickListener {
+                        sortIncome(SortField.COMMENT)
+                        incomeRV.adapter.notifyDataSetChanged()
+                    }
+
+                    calculateIncomeTotal()
+                    return incomeView
+                }
+                2 -> {
+                    expenseView = inflater.inflate(R.layout.fragment_expenses, container, false)
+                    expenseViewAdapter = ExpenseAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
+
+                    val expenseRV = expenseView.rvExpenses
+                    expenseRV.setHasFixedSize(true)
+                    expenseRV.layoutManager = LinearLayoutManager(expenseView.context)
+                    expenseRV.adapter = expenseViewAdapter
+
+                    // Sort Expenses By Date, Expense, Category and Comment
+                    expenseView.lblExpDate.setOnClickListener {
+                        sortExpenses(SortField.DATE)
+                        expenseRV.adapter.notifyDataSetChanged()
+                    }
+
+                    expenseView.lblExpense.setOnClickListener {
+                        sortExpenses(SortField.EXPENSE)
+                        expenseRV.adapter.notifyDataSetChanged()
+                    }
+
+                    expenseView.lblCategory.setOnClickListener {
+                        sortExpenses(SortField.CATEGORY)
+                        expenseRV.adapter.notifyDataSetChanged()
+                    }
+
+                    expenseView.lblExpComment.setOnClickListener {
+                        sortExpenses(SortField.COMMENT)
+                        expenseRV.adapter.notifyDataSetChanged()
+                    }
+
+                    calculateExpensesTotal()
+                    return expenseView
+                }
+                3 -> {
+                    categoryView = inflater.inflate(R.layout.fragment_categories, container, false)
+                    categoryViewAdapter = CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
+
+                    val categoryRV = categoryView.rvCategories
+                    categoryRV.setHasFixedSize(true)
+                    categoryRV.layoutManager = LinearLayoutManager(categoryView.context)
+                    categoryRV.adapter = categoryViewAdapter
+                    return categoryView
+                }
+                else -> {
+                    null
+                }
             }
+        }
+
+        @SuppressLint("SetTextI18n")
+        private fun calculateIncomeTotal() {
+            var total = 0.0
+            for (income in incomeList) {
+                total += income.salary.toDouble()
+            }
+
+            val symbols = DecimalFormatSymbols()
+            symbols.groupingSeparator = '.'
+            symbols.decimalSeparator = ','
+            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+
+            incomeView.incTotal?.text = "${getString(R.string.total_income)} ${moneyFormat.format(total)}"
+        }
+
+        @SuppressLint("SetTextI18n")
+        private fun calculateExpensesTotal() {
+            var total = 0.0
+            for (expense in expensesList) {
+                total += expense.amount.toDouble()
+            }
+
+            val symbols = DecimalFormatSymbols()
+            symbols.groupingSeparator = '.'
+            symbols.decimalSeparator = ','
+            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+
+            expenseView.expTotal?.text = "${getString(R.string.total_expenses)} ${moneyFormat.format(total)}"
         }
 
         private fun sortIncome(field: SortField) {

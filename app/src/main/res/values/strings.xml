@@ -26,4 +26,6 @@
     <string name="filter">Filter</string>
     <string name="filter_expenses">Filter Expenses</string>
     <string name="minDateGraterMaxDate">Date Min is greater than Date Max</string>
+    <string name="total_income">Total Income:</string>
+    <string name="total_expenses">Total Expenses:</string>
 </resources>

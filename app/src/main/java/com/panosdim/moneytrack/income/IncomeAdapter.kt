@@ -35,7 +35,7 @@ class IncomeAdapter (private val incomeItemList: List<Income>, private val click
             val symbols = DecimalFormatSymbols()
             symbols.groupingSeparator = '.'
             symbols.decimalSeparator = ','
-            val moneyFormat = DecimalFormat("#,###.00 €", symbols)
+            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
 
             itemView.incDate.text = inc.date
             itemView.incSalary.text = moneyFormat.format(inc.salary.toDouble())
