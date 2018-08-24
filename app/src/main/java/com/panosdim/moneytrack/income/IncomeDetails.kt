@@ -15,9 +15,11 @@ import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.network.INCOME_MESSAGE
 import com.panosdim.moneytrack.network.deleteIncome
+import com.panosdim.moneytrack.network.getIncome
 import com.panosdim.moneytrack.network.saveIncome
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -27,8 +29,11 @@ class IncomeDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
     private var income = Income(date = "", salary = "", comment = "")
+    private lateinit var mCalendar: Calendar
 
     @SuppressLint("SimpleDateFormat")
+    private val mDateFormatter = SimpleDateFormat("yyyy-MM-dd")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_income_details)
@@ -40,27 +45,24 @@ class IncomeDetails : AppCompatActivity() {
 
         incDate.setOnClickListener {
             // Use the date from the TextView
-            val c = Calendar.getInstance()
-            val df = SimpleDateFormat("yyyy-MM-dd")
-            val date: Date? = try {
-                df.parse(incDate.text.toString())
+            mCalendar = Calendar.getInstance()
+            try {
+                val date = mDateFormatter.parse(incDate.text.toString())
+                mCalendar.time = date
             } catch (e: ParseException) {
-                null
-            }
-            if (date != null) {
-                c.time = date
+                mCalendar = Calendar.getInstance()
             }
 
-            val cYear = c.get(Calendar.YEAR)
-            val cMonth = c.get(Calendar.MONTH)
-            val cDay = c.get(Calendar.DAY_OF_MONTH)
+            val cYear = mCalendar.get(Calendar.YEAR)
+            val cMonth = mCalendar.get(Calendar.MONTH)
+            val cDay = mCalendar.get(Calendar.DAY_OF_MONTH)
 
             // date picker dialog
             datePickerDialog = DatePickerDialog(this@IncomeDetails,
                     DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                         // set day of month , month and year value in the edit text
-                        c.set(year, month, dayOfMonth, 0, 0)
-                        incDate.setText(df.format(c.time))
+                        mCalendar.set(year, month, dayOfMonth, 0, 0)
+                        incDate.setText(mDateFormatter.format(mCalendar.time))
                     }, cYear, cMonth, cDay)
             datePickerDialog.show()
         }
@@ -121,21 +123,18 @@ class IncomeDetails : AppCompatActivity() {
         var focusView: View? = null
 
         // Check for a valid date.
-        val df = SimpleDateFormat("yyyy-MM-dd")
-        val parsedDate: Date? = try {
-            df.parse(date)
-        } catch (e: ParseException) {
-            null
-        }
         if (date.isEmpty()) {
             incDate.error = getString(R.string.error_field_required)
             focusView = incDate
             cancel = true
-        }
-        if (parsedDate == null) {
-            incDate.error = getString(R.string.invalidDate)
-            focusView = incDate
-            cancel = true
+        } else {
+            try {
+                mDateFormatter.parse(date)
+            } catch (e: ParseException) {
+                incDate.error = getString(R.string.invalidDate)
+                focusView = incDate
+                cancel = true
+            }
         }
 
         // Check for a valid salary.
@@ -155,6 +154,20 @@ class IncomeDetails : AppCompatActivity() {
             income.comment = incComment.text.toString()
 
             saveIncome({
+                if (FilterIncome.mFiltersSet) {
+                    FilterIncome.clearFilters()
+                    getIncome {
+                        if (it.isNotEmpty()) {
+                            incomeList.clear()
+                            // Convert JSON response to List<Income>
+                            val resp = JSONArray(it)
+                            for (inc in 0 until resp.length()) {
+                                val item = resp.getJSONObject(inc)
+                                incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                            }
+                        }
+                    }
+                }
                 val res = JSONObject(it)
                 if (res.getString("status") != "error") {
                     if (income.id == null) {

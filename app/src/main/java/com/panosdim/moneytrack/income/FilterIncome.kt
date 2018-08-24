@@ -210,14 +210,10 @@ class FilterIncome : AppCompatActivity() {
         }
 
         btnClearFilters.setOnClickListener {
-            mDateMin = ""
-            mDateMax = ""
-            mSalaryMin = ""
-            mSalaryMax = ""
-            mComment = ""
-            mFiltersSet = false
             mSetMinDate = false
             mSetMaxDate = false
+
+            clearFilters()
 
             getIncome {
                 if (it.isNotEmpty()) {
@@ -256,13 +252,10 @@ class FilterIncome : AppCompatActivity() {
             parsedMinDate = try {
                 mDateFormatter.parse(minDate)
             } catch (e: ParseException) {
-                null
-            }
-
-            if (parsedMinDate == null) {
                 dateMin.error = getString(R.string.invalidDate)
                 focusView = dateMin
                 valid = false
+                null
             }
         }
 
@@ -271,18 +264,10 @@ class FilterIncome : AppCompatActivity() {
             parsedMaxDate = try {
                 mDateFormatter.parse(maxDate)
             } catch (e: ParseException) {
-                null
-            }
-            if (parsedMaxDate == null) {
                 dateMax.error = getString(R.string.invalidDate)
                 focusView = dateMax
                 valid = false
-            }
-
-            if (!valid) {
-                // There was an error; don't attempt to store data and focus the first
-                // form field with an error.
-                focusView!!.requestFocus()
+                null
             }
         }
 
@@ -295,14 +280,14 @@ class FilterIncome : AppCompatActivity() {
                     focusView = dateMin
                     valid = false
                 }
-
-                if (!valid) {
-                    // There was an error; don't attempt to store data and focus the first
-                    // form field with an error.
-                    focusView!!.requestFocus()
-                }
             }
 
+        }
+
+        if (!valid) {
+            // There was an error; don't attempt to store data and focus the first
+            // form field with an error.
+            focusView!!.requestFocus()
         }
 
         return valid
@@ -326,6 +311,15 @@ class FilterIncome : AppCompatActivity() {
         private var mSalaryMax = ""
         private var mComment = ""
         private var mIncomeList = listOf<Income>()
-        private var mFiltersSet = false
+        var mFiltersSet = false
+
+        fun clearFilters() {
+            mDateMin = ""
+            mDateMax = ""
+            mSalaryMin = ""
+            mSalaryMax = ""
+            mComment = ""
+            mFiltersSet = false
+        }
     }
 }

@@ -79,9 +79,7 @@ class MainActivity : AppCompatActivity() {
                         val item = resp.getJSONObject(inc)
                         incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
                     }
-                    if (container.rvIncome != null) {
-                        container.rvIncome.adapter.notifyDataSetChanged()
-                    }
+                    container.rvIncome?.adapter?.notifyDataSetChanged()
                 }
             }
         }
@@ -95,9 +93,7 @@ class MainActivity : AppCompatActivity() {
                         val item = resp.getJSONObject(inc)
                         categoriesList.add(Category(item.getString("id"), item.getString("category")))
                     }
-                    if (container.rvCategories != null) {
-                        container.rvCategories.adapter.notifyDataSetChanged()
-                    }
+                    container.rvCategories?.adapter?.notifyDataSetChanged()
                 }
             }
         }
@@ -168,10 +164,7 @@ class MainActivity : AppCompatActivity() {
                 val item = resp.getJSONObject(inc)
                 expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
             }
-
-            if (container.rvExpenses != null) {
-                container.rvExpenses.adapter.notifyDataSetChanged()
-            }
+            container.rvExpenses?.adapter?.notifyDataSetChanged()
         }
     }
 
@@ -340,7 +333,8 @@ class MainActivity : AppCompatActivity() {
                     SortField.DATE -> incomeList.sortByDescending { it.date }
                     SortField.SALARY -> incomeList.sortBy { it.salary.toDouble() }
                     SortField.COMMENT -> incomeList.sortBy { it.comment }
-                    else -> { }
+                    else -> {
+                    }
                 }
             }
         }
@@ -357,7 +351,8 @@ class MainActivity : AppCompatActivity() {
                     SortField.EXPENSE -> expensesList.sortBy { it.amount.toDouble() }
                     SortField.CATEGORY -> expensesList.sortBy { it.category }
                     SortField.COMMENT -> expensesList.sortBy { it.comment }
-                    else -> { }
+                    else -> {
+                    }
                 }
             }
         }

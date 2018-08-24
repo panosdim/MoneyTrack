@@ -232,21 +232,16 @@ class FilterExpenses : AppCompatActivity() {
         }
 
         btnClearFilters.setOnClickListener {
-            mDateMin = ""
-            mDateMax = ""
-            mExpenseMin = ""
-            mExpenseMax = ""
-            mCategory = ""
-            mComment = ""
             expCategory.setSelection(0)
-            mFiltersSet = false
             mSetMinDate = false
             mSetMaxDate = false
+
+            clearFilters()
 
             getExpenses {
                 if (it.isNotEmpty()) {
                     expensesList.clear()
-                    // Convert JSON response to List<Income>
+                    // Convert JSON response to List<Expense>
                     val resp = JSONArray(it)
                     for (inc in 0 until resp.length()) {
                         val item = resp.getJSONObject(inc)
@@ -280,13 +275,10 @@ class FilterExpenses : AppCompatActivity() {
             parsedMinDate = try {
                 mDateFormatter.parse(minDate)
             } catch (e: ParseException) {
-                null
-            }
-
-            if (parsedMinDate == null) {
                 dateMin.error = getString(R.string.invalidDate)
                 focusView = dateMin
                 valid = false
+                null
             }
         }
 
@@ -295,18 +287,10 @@ class FilterExpenses : AppCompatActivity() {
             parsedMaxDate = try {
                 mDateFormatter.parse(maxDate)
             } catch (e: ParseException) {
-                null
-            }
-            if (parsedMaxDate == null) {
                 dateMax.error = getString(R.string.invalidDate)
                 focusView = dateMax
                 valid = false
-            }
-
-            if (!valid) {
-                // There was an error; don't attempt to store data and focus the first
-                // form field with an error.
-                focusView!!.requestFocus()
+                null
             }
         }
 
@@ -319,14 +303,14 @@ class FilterExpenses : AppCompatActivity() {
                     focusView = dateMin
                     valid = false
                 }
-
-                if (!valid) {
-                    // There was an error; don't attempt to store data and focus the first
-                    // form field with an error.
-                    focusView!!.requestFocus()
-                }
             }
 
+        }
+
+        if (!valid) {
+            // There was an error; don't attempt to store data and focus the first
+            // form field with an error.
+            focusView!!.requestFocus()
         }
 
         return valid
@@ -351,6 +335,16 @@ class FilterExpenses : AppCompatActivity() {
         private var mCategory = ""
         private var mComment = ""
         private var mExpensesList = listOf<Expense>()
-        private var mFiltersSet = false
+        var mFiltersSet = false
+
+        fun clearFilters() {
+            mDateMin = ""
+            mDateMax = ""
+            mExpenseMin = ""
+            mExpenseMax = ""
+            mCategory = ""
+            mComment = ""
+            mFiltersSet = false
+        }
     }
 }

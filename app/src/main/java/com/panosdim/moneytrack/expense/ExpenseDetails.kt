@@ -18,9 +18,11 @@ import com.panosdim.moneytrack.category.Category
 import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.network.EXPENSE_MESSAGE
 import com.panosdim.moneytrack.network.deleteExpense
+import com.panosdim.moneytrack.network.getExpenses
 import com.panosdim.moneytrack.network.saveExpense
 import kotlinx.android.synthetic.main.activity_expense_details.*
 import kotlinx.android.synthetic.main.content_expense_details.*
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -30,8 +32,11 @@ class ExpenseDetails : AppCompatActivity() {
 
     private lateinit var datePickerDialog: DatePickerDialog
     private var expense = Expense(date = "", amount = "", category = "", comment = "")
+    private lateinit var mCalendar: Calendar
 
     @SuppressLint("SimpleDateFormat")
+    private val mDateFormatter = SimpleDateFormat("yyyy-MM-dd")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_expense_details)
@@ -48,27 +53,24 @@ class ExpenseDetails : AppCompatActivity() {
 
         expDate.setOnClickListener {
             // Use the date from the TextView
-            val c = Calendar.getInstance()
-            val df = SimpleDateFormat("yyyy-MM-dd")
-            val date: Date? = try {
-                df.parse(expDate.text.toString())
+            mCalendar = Calendar.getInstance()
+            try {
+                val date = mDateFormatter.parse(expDate.text.toString())
+                mCalendar.time = date
             } catch (e: ParseException) {
-                null
-            }
-            if (date != null) {
-                c.time = date
+                mCalendar = Calendar.getInstance()
             }
 
-            val cYear = c.get(Calendar.YEAR)
-            val cMonth = c.get(Calendar.MONTH)
-            val cDay = c.get(Calendar.DAY_OF_MONTH)
+            val cYear = mCalendar.get(Calendar.YEAR)
+            val cMonth = mCalendar.get(Calendar.MONTH)
+            val cDay = mCalendar.get(Calendar.DAY_OF_MONTH)
 
             // date picker dialog
             datePickerDialog = DatePickerDialog(this@ExpenseDetails,
                     DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                         // set day of month , month and year value in the edit text
-                        c.set(year, month, dayOfMonth, 0, 0)
-                        expDate.setText(df.format(c.time))
+                        mCalendar.set(year, month, dayOfMonth, 0, 0)
+                        expDate.setText(mDateFormatter.format(mCalendar.time))
                     }, cYear, cMonth, cDay)
             datePickerDialog.show()
         }
@@ -119,7 +121,6 @@ class ExpenseDetails : AppCompatActivity() {
         return true
     }
 
-    @SuppressLint("SimpleDateFormat")
     private fun validateInputs() {
         // Reset errors.
         expDate.error = null
@@ -133,21 +134,18 @@ class ExpenseDetails : AppCompatActivity() {
         var focusView: View? = null
 
         // Check for a valid date.
-        val df = SimpleDateFormat("yyyy-MM-dd")
-        val parsedDate: Date? = try {
-            df.parse(date)
-        } catch (e: ParseException) {
-            null
-        }
         if (date.isEmpty()) {
             expDate.error = getString(R.string.error_field_required)
             focusView = expDate
             cancel = true
-        }
-        if (parsedDate == null) {
-            expDate.error = getString(R.string.invalidDate)
-            focusView = expDate
-            cancel = true
+        } else {
+            try {
+                mDateFormatter.parse(date)
+            } catch (e: ParseException) {
+                expDate.error = getString(R.string.invalidDate)
+                focusView = expDate
+                cancel = true
+            }
         }
 
         // Check for a valid salary.
@@ -168,6 +166,20 @@ class ExpenseDetails : AppCompatActivity() {
             expense.comment = expComment.text.toString()
 
             saveExpense({
+                if (FilterExpenses.mFiltersSet) {
+                    FilterExpenses.clearFilters()
+                    getExpenses {
+                        if (it.isNotEmpty()) {
+                            expensesList.clear()
+                            // Convert JSON response to List<Expense>
+                            val resp = JSONArray(it)
+                            for (inc in 0 until resp.length()) {
+                                val item = resp.getJSONObject(inc)
+                                expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
+                            }
+                        }
+                    }
+                }
                 val res = JSONObject(it)
                 if (res.getString("status") != "error") {
                     if (expense.id == null) {
