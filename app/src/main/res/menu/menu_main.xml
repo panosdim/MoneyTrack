@@ -4,6 +4,12 @@
     tools:context="com.panosdim.moneytrack.MainActivity">
 
     <item
+        android:id="@+id/action_sort"
+        android:icon="@android:drawable/ic_menu_sort_alphabetically"
+        android:title="@string/filter"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_filter"
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/filter"

@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (requestCode == INCOME_CODE) {
-                container.rvIncome.adapter.notifyDataSetChanged()
+                sortIncome()
                 calculateIncomeTotal()
             }
 
@@ -156,7 +156,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (requestCode == FILTER_INCOME_CODE) {
-                container.rvIncome.adapter.notifyDataSetChanged()
+                sortIncome()
                 calculateIncomeTotal()
             }
 
@@ -235,6 +235,19 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        R.id.action_sort -> {
+            when (tabs.selectedTabPosition) {
+                0 -> {
+                    container.sortIncome.visibility = if (container.sortIncome.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                }
+                1 -> {
+                    val intent = Intent(this, FilterExpenses::class.java)
+                    startActivityForResult(intent, FILTER_EXPENSE_CODE)
+                }
+            }
+            true
+        }
+
         else -> {
             // If we got here, the user's action was not recognized.
             // Invoke the superclass to handle it.
@@ -257,6 +270,47 @@ class MainActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    fun sortIncome() {
+        when (container.rgField?.checkedRadioButtonId) {
+            R.id.rbDate -> {
+                when (container.rgDirection?.checkedRadioButtonId) {
+                    R.id.rbAscending -> {
+                        incomeList.sortBy { it.date }
+                    }
+                    R.id.rbDescending -> {
+                        incomeList.sortByDescending { it.date }
+                    }
+                }
+            }
+
+            R.id.rbSalary -> {
+                when (container.rgDirection?.checkedRadioButtonId) {
+                    R.id.rbAscending -> {
+                        incomeList.sortBy { it.salary.toDouble() }
+                    }
+                    R.id.rbDescending -> {
+                        incomeList.sortByDescending { it.salary.toDouble() }
+                    }
+                }
+            }
+
+            R.id.rbComment -> {
+                when (container.rgDirection?.checkedRadioButtonId) {
+                    R.id.rbAscending -> {
+                        incomeList.sortBy { it.comment }
+                    }
+                    R.id.rbDescending -> {
+                        incomeList.sortByDescending { it.comment }
+                    }
+                }
+            }
+
+            else -> {
+            }
+        }
+        container.rvIncome?.adapter?.notifyDataSetChanged()
     }
 
     /**
@@ -305,19 +359,12 @@ class MainActivity : AppCompatActivity() {
                     incomeRV.adapter = incomeViewAdapter
 
                     // Sort Income By Date, Salary and Comment
-                    incomeView.lblIncDate.setOnClickListener {
-                        sortIncome(SortField.DATE)
-                        incomeRV.adapter.notifyDataSetChanged()
+                    incomeView.rgField.setOnCheckedChangeListener { _, _ ->
+                        sortIncome()
                     }
 
-                    incomeView.lblSalary.setOnClickListener {
-                        sortIncome(SortField.SALARY)
-                        incomeRV.adapter.notifyDataSetChanged()
-                    }
-
-                    incomeView.lblIncComment.setOnClickListener {
-                        sortIncome(SortField.COMMENT)
-                        incomeRV.adapter.notifyDataSetChanged()
+                    incomeView.rgDirection.setOnCheckedChangeListener { _, _ ->
+                        sortIncome()
                     }
 
                     calculateIncomeTotal()
@@ -402,21 +449,45 @@ class MainActivity : AppCompatActivity() {
             expenseView.expTotal?.text = "${getString(R.string.total_expenses)} ${moneyFormat.format(total)}"
         }
 
-        private fun sortIncome(field: SortField) {
-            if (mIncomeSorted.sorted == field) {
-                incomeList.reverse()
-                mIncomeSorted.direction = if (mIncomeSorted.direction == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
-            } else {
-                mIncomeSorted.sorted = field
-                mIncomeSorted.direction = if (field == SortField.DATE) SortDirection.DESCENDING else SortDirection.ASCENDING
-                when (field) {
-                    SortField.DATE -> incomeList.sortByDescending { it.date }
-                    SortField.SALARY -> incomeList.sortBy { it.salary.toDouble() }
-                    SortField.COMMENT -> incomeList.sortBy { it.comment }
-                    else -> {
+        private fun sortIncome() {
+            when (incomeView.rgField?.checkedRadioButtonId) {
+                R.id.rbDate -> {
+                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                        R.id.rbAscending -> {
+                            incomeList.sortBy { it.date }
+                        }
+                        R.id.rbDescending -> {
+                            incomeList.sortByDescending { it.date }
+                        }
                     }
                 }
+
+                R.id.rbSalary -> {
+                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                        R.id.rbAscending -> {
+                            incomeList.sortBy { it.salary.toDouble() }
+                        }
+                        R.id.rbDescending -> {
+                            incomeList.sortByDescending { it.salary.toDouble() }
+                        }
+                    }
+                }
+
+                R.id.rbComment -> {
+                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                        R.id.rbAscending -> {
+                            incomeList.sortBy { it.comment }
+                        }
+                        R.id.rbDescending -> {
+                            incomeList.sortByDescending { it.comment }
+                        }
+                    }
+                }
+
+                else -> {
+                }
             }
+            incomeView.rvIncome?.adapter?.notifyDataSetChanged()
         }
 
         private fun sortExpenses(field: SortField) {
@@ -467,7 +538,6 @@ class MainActivity : AppCompatActivity() {
              * fragment.
              */
             private const val ARG_SECTION_NUMBER = "section_number"
-            private var mIncomeSorted = SortedBy(SortField.DATE, SortDirection.DESCENDING)
             private var mExpensesSorted = SortedBy(SortField.DATE, SortDirection.DESCENDING)
 
             /**

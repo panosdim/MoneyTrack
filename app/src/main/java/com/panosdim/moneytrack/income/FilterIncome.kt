@@ -5,20 +5,20 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
+import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.View
 import com.panosdim.moneytrack.DecimalDigitsInputFilter
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.getIncome
+import com.panosdim.moneytrack.network.INCOME_MESSAGE
 import kotlinx.android.synthetic.main.activity_filter_income.*
-import org.json.JSONArray
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
-import android.text.Editable
 
 
 class FilterIncome : AppCompatActivity() {
@@ -47,7 +47,7 @@ class FilterIncome : AppCompatActivity() {
 
         // Store list of income before filtered
         if (!mFiltersSet) {
-            mIncomeList = incomeList.toList()
+            mIncomeList.addAll(incomeList)
         }
 
         dateMin.setOnClickListener {
@@ -213,23 +213,30 @@ class FilterIncome : AppCompatActivity() {
             mSetMinDate = false
             mSetMaxDate = false
 
-            clearFilters()
+            mDateMin = ""
+            mDateMax = ""
+            mSalaryMin = ""
+            mSalaryMax = ""
+            mComment = ""
 
-            getIncome {
-                if (it.isNotEmpty()) {
-                    incomeList.clear()
-                    // Convert JSON response to List<Income>
-                    val resp = JSONArray(it)
-                    for (inc in 0 until resp.length()) {
-                        val item = resp.getJSONObject(inc)
-                        incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
-                    }
-                }
-
-                val returnIntent = Intent()
-                setResult(Activity.RESULT_OK, returnIntent)
-                finish()
+            if (mFiltersSet) {
+                mFiltersSet = false
+                incomeList.clear()
+                incomeList.addAll(mIncomeList)
             }
+
+            mIncomeList.clear()
+
+            val returnIntent = Intent()
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
+        }
+
+        val bundle = intent.extras
+        if (bundle != null) {
+            val income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
+            mIncomeList.add(income)
+            btnSetFilters.performClick()
         }
     }
 
@@ -310,16 +317,7 @@ class FilterIncome : AppCompatActivity() {
         private var mSalaryMin = ""
         private var mSalaryMax = ""
         private var mComment = ""
-        private var mIncomeList = listOf<Income>()
+        private var mIncomeList = mutableListOf<Income>()
         var mFiltersSet = false
-
-        fun clearFilters() {
-            mDateMin = ""
-            mDateMax = ""
-            mSalaryMin = ""
-            mSalaryMax = ""
-            mComment = ""
-            mFiltersSet = false
-        }
     }
 }

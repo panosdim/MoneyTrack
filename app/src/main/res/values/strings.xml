@@ -28,4 +28,6 @@
     <string name="minDateGraterMaxDate">Date Min is greater than Date Max</string>
     <string name="total_income">Total Income:</string>
     <string name="total_expenses">Total Expenses:</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
 </resources>

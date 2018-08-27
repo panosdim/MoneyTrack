@@ -11,15 +11,14 @@ import android.text.InputFilter
 import android.view.View
 import android.widget.Toast
 import com.panosdim.moneytrack.DecimalDigitsInputFilter
+import com.panosdim.moneytrack.FILTER_INCOME_CODE
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.network.INCOME_MESSAGE
 import com.panosdim.moneytrack.network.deleteIncome
-import com.panosdim.moneytrack.network.getIncome
 import com.panosdim.moneytrack.network.saveIncome
 import kotlinx.android.synthetic.main.activity_income_details.*
 import kotlinx.android.synthetic.main.content_income_details.*
-import org.json.JSONArray
 import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -154,20 +153,6 @@ class IncomeDetails : AppCompatActivity() {
             income.comment = incComment.text.toString()
 
             saveIncome({
-                if (FilterIncome.mFiltersSet) {
-                    FilterIncome.clearFilters()
-                    getIncome {
-                        if (it.isNotEmpty()) {
-                            incomeList.clear()
-                            // Convert JSON response to List<Income>
-                            val resp = JSONArray(it)
-                            for (inc in 0 until resp.length()) {
-                                val item = resp.getJSONObject(inc)
-                                incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
-                            }
-                        }
-                    }
-                }
                 val res = JSONObject(it)
                 if (res.getString("status") != "error") {
                     if (income.id == null) {
@@ -177,15 +162,32 @@ class IncomeDetails : AppCompatActivity() {
                         val index = incomeList.indexOfFirst { it.id == income.id }
                         incomeList[index] = income
                     }
-                    incomeList.sortByDescending { it.date }
-                    val returnIntent = Intent()
-                    setResult(Activity.RESULT_OK, returnIntent)
-                    finish()
+                    if (FilterIncome.mFiltersSet) {
+                        val intent = Intent(this, FilterIncome::class.java)
+                        val bundle = Bundle()
+                        bundle.putParcelable(INCOME_MESSAGE, income)
+                        intent.putExtras(bundle)
+                        startActivityForResult(intent, FILTER_INCOME_CODE)
+                    } else {
+                        val returnIntent = Intent()
+                        setResult(Activity.RESULT_OK, returnIntent)
+                        finish()
+                    }
                 }
 
                 Toast.makeText(this, res.getString("message"),
                         Toast.LENGTH_LONG).show()
             }, income.toJson())
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == FILTER_INCOME_CODE) {
+                val returnIntent = Intent()
+                setResult(Activity.RESULT_OK, returnIntent)
+                finish()
+            }
         }
     }
 
