@@ -5,20 +5,16 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.View
 import android.widget.ArrayAdapter
-import com.panosdim.moneytrack.DecimalDigitsInputFilter
-import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.category.Category
-import com.panosdim.moneytrack.expensesList
-import com.panosdim.moneytrack.network.getExpenses
 import kotlinx.android.synthetic.main.activity_filter_expenses.*
-import org.json.JSONArray
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -57,7 +53,7 @@ class FilterExpenses : AppCompatActivity() {
 
         // Store list of expenses before filtered
         if (!mFiltersSet) {
-            mExpensesList = expensesList.toList()
+            mExpensesList.addAll(expensesList)
         }
 
         dateMin.setOnClickListener {
@@ -236,23 +232,42 @@ class FilterExpenses : AppCompatActivity() {
             mSetMinDate = false
             mSetMaxDate = false
 
-            clearFilters()
+            mDateMin = ""
+            mDateMax = ""
+            mExpenseMin = ""
+            mExpenseMax = ""
+            mCategory = ""
+            mComment = ""
 
-            getExpenses {
-                if (it.isNotEmpty()) {
-                    expensesList.clear()
-                    // Convert JSON response to List<Expense>
-                    val resp = JSONArray(it)
-                    for (inc in 0 until resp.length()) {
-                        val item = resp.getJSONObject(inc)
-                        expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
+            if (mFiltersSet) {
+                mFiltersSet = false
+                expensesList.clear()
+                expensesList.addAll(mExpensesList)
+            }
+
+            mExpensesList.clear()
+
+            val returnIntent = Intent()
+            setResult(Activity.RESULT_OK, returnIntent)
+            finish()
+        }
+
+        val bundle = intent.extras
+        if (bundle != null) {
+            val expense = bundle.getParcelable<Parcelable>(EXPENSE_MESSAGE) as Expense
+            val operation = bundle.getString(OPERATION_MESSAGE)
+            when (operation) {
+                Operations.FILTER_DELETE_EXPENSE.name -> mExpensesList.remove(expense)
+                Operations.FILTER_ADD_EXPENSE.name -> {
+                    val index = mExpensesList.indexOfFirst { it.id == expense.id }
+                    if (index == -1) {
+                        mExpensesList.add(expense)
+                    } else {
+                        mExpensesList[index] = expense
                     }
                 }
-
-                val returnIntent = Intent()
-                setResult(Activity.RESULT_OK, returnIntent)
-                finish()
             }
+            btnSetFilters.performClick()
         }
     }
 
@@ -334,17 +349,11 @@ class FilterExpenses : AppCompatActivity() {
         private var mExpenseMax = ""
         private var mCategory = ""
         private var mComment = ""
-        private var mExpensesList = listOf<Expense>()
-        var mFiltersSet = false
+        private var mExpensesList = mutableListOf<Expense>()
+        private var mFiltersSet = false
 
-        fun clearFilters() {
-            mDateMin = ""
-            mDateMax = ""
-            mExpenseMin = ""
-            mExpenseMax = ""
-            mCategory = ""
-            mComment = ""
-            mFiltersSet = false
+        fun isFilterSet(): Boolean {
+            return mFiltersSet
         }
     }
 }

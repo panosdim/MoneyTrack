@@ -11,18 +11,12 @@ import android.text.InputFilter
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import com.panosdim.moneytrack.DecimalDigitsInputFilter
-import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.category.Category
-import com.panosdim.moneytrack.expensesList
-import com.panosdim.moneytrack.network.EXPENSE_MESSAGE
 import com.panosdim.moneytrack.network.deleteExpense
-import com.panosdim.moneytrack.network.getExpenses
 import com.panosdim.moneytrack.network.saveExpense
 import kotlinx.android.synthetic.main.activity_expense_details.*
 import kotlinx.android.synthetic.main.content_expense_details.*
-import org.json.JSONArray
 import org.json.JSONObject
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -84,10 +78,19 @@ class ExpenseDetails : AppCompatActivity() {
                 deleteExpense({
                     val res = JSONObject(it)
                     if (res.getString("status") != "error") {
-                        val returnIntent = Intent()
                         expensesList.remove(expense)
-                        setResult(Activity.RESULT_OK, returnIntent)
-                        finish()
+                        if (FilterExpenses.isFilterSet()) {
+                            val intent = Intent(this, FilterExpenses::class.java)
+                            val bundle = Bundle()
+                            bundle.putParcelable(EXPENSE_MESSAGE, expense)
+                            bundle.putString(OPERATION_MESSAGE, Operations.FILTER_DELETE_EXPENSE.name)
+                            intent.putExtras(bundle)
+                            startActivityForResult(intent, Operations.FILTER_DELETE_EXPENSE.code)
+                        } else {
+                            val returnIntent = Intent()
+                            setResult(Activity.RESULT_OK, returnIntent)
+                            finish()
+                        }
                     }
 
                     Toast.makeText(this, res.getString("message"),
@@ -166,20 +169,6 @@ class ExpenseDetails : AppCompatActivity() {
             expense.comment = expComment.text.toString()
 
             saveExpense({
-                if (FilterExpenses.mFiltersSet) {
-                    FilterExpenses.clearFilters()
-                    getExpenses {
-                        if (it.isNotEmpty()) {
-                            expensesList.clear()
-                            // Convert JSON response to List<Expense>
-                            val resp = JSONArray(it)
-                            for (inc in 0 until resp.length()) {
-                                val item = resp.getJSONObject(inc)
-                                expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
-                            }
-                        }
-                    }
-                }
                 val res = JSONObject(it)
                 if (res.getString("status") != "error") {
                     if (expense.id == null) {
@@ -189,15 +178,33 @@ class ExpenseDetails : AppCompatActivity() {
                         val index = expensesList.indexOfFirst { it.id == expense.id }
                         expensesList[index] = expense
                     }
-                    expensesList.sortByDescending { it.date }
-                    val returnIntent = Intent()
-                    setResult(Activity.RESULT_OK, returnIntent)
-                    finish()
+                    if (FilterExpenses.isFilterSet()) {
+                        val intent = Intent(this, FilterExpenses::class.java)
+                        val bundle = Bundle()
+                        bundle.putParcelable(EXPENSE_MESSAGE, expense)
+                        bundle.putString(OPERATION_MESSAGE, Operations.FILTER_ADD_EXPENSE.name)
+                        intent.putExtras(bundle)
+                        startActivityForResult(intent, Operations.FILTER_ADD_EXPENSE.code)
+                    } else {
+                        val returnIntent = Intent()
+                        setResult(Activity.RESULT_OK, returnIntent)
+                        finish()
+                    }
                 }
 
                 Toast.makeText(this, res.getString("message"),
                         Toast.LENGTH_LONG).show()
             }, expense.toJson())
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == Operations.FILTER_ADD_EXPENSE.code || requestCode == Operations.FILTER_DELETE_EXPENSE.code) {
+                val returnIntent = Intent()
+                setResult(Activity.RESULT_OK, returnIntent)
+                finish()
+            }
         }
     }
 

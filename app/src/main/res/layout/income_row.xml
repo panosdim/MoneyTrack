@@ -54,6 +54,7 @@
                     android:layout_weight="1"
                     android:text="@string/salary"
                     android:textAlignment="viewEnd"
+                    android:textColor="@android:color/holo_green_light"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     tools:layout_editor_absoluteX="184dp"
@@ -64,7 +65,7 @@
             <TextView
                 android:id="@+id/incComment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:layout_weight="1"
                 android:text="@string/comment"
                 android:textAlignment="center"

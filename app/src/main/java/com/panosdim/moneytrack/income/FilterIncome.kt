@@ -11,10 +11,7 @@ import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.View
-import com.panosdim.moneytrack.DecimalDigitsInputFilter
-import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.INCOME_MESSAGE
+import com.panosdim.moneytrack.*
 import kotlinx.android.synthetic.main.activity_filter_income.*
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -235,7 +232,18 @@ class FilterIncome : AppCompatActivity() {
         val bundle = intent.extras
         if (bundle != null) {
             val income = bundle.getParcelable<Parcelable>(INCOME_MESSAGE) as Income
-            mIncomeList.add(income)
+            val operation = bundle.getString(OPERATION_MESSAGE)
+            when (operation) {
+                Operations.FILTER_DELETE_INCOME.name -> mIncomeList.remove(income)
+                Operations.FILTER_ADD_INCOME.name -> {
+                    val index = mIncomeList.indexOfFirst { it.id == income.id }
+                    if (index == -1) {
+                        mIncomeList.add(income)
+                    } else {
+                        mIncomeList[index] = income
+                    }
+                }
+            }
             btnSetFilters.performClick()
         }
     }
@@ -318,6 +326,10 @@ class FilterIncome : AppCompatActivity() {
         private var mSalaryMax = ""
         private var mComment = ""
         private var mIncomeList = mutableListOf<Income>()
-        var mFiltersSet = false
+        private var mFiltersSet = false
+
+        fun isFilterSet(): Boolean {
+            return mFiltersSet
+        }
     }
 }

@@ -10,11 +10,7 @@ import android.support.v7.app.AppCompatActivity
 import android.text.InputFilter
 import android.view.View
 import android.widget.Toast
-import com.panosdim.moneytrack.DecimalDigitsInputFilter
-import com.panosdim.moneytrack.FILTER_INCOME_CODE
-import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.network.INCOME_MESSAGE
+import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.network.deleteIncome
 import com.panosdim.moneytrack.network.saveIncome
 import kotlinx.android.synthetic.main.activity_income_details.*
@@ -75,10 +71,19 @@ class IncomeDetails : AppCompatActivity() {
                 deleteIncome({
                     val res = JSONObject(it)
                     if (res.getString("status") != "error") {
-                        val returnIntent = Intent()
                         incomeList.remove(income)
-                        setResult(Activity.RESULT_OK, returnIntent)
-                        finish()
+                        if (FilterIncome.isFilterSet()) {
+                            val intent = Intent(this, FilterIncome::class.java)
+                            val bundle = Bundle()
+                            bundle.putParcelable(INCOME_MESSAGE, income)
+                            bundle.putString(OPERATION_MESSAGE, Operations.FILTER_DELETE_INCOME.name)
+                            intent.putExtras(bundle)
+                            startActivityForResult(intent, Operations.FILTER_DELETE_INCOME.code)
+                        } else {
+                            val returnIntent = Intent()
+                            setResult(Activity.RESULT_OK, returnIntent)
+                            finish()
+                        }
                     }
 
                     Toast.makeText(this, res.getString("message"),
@@ -162,12 +167,13 @@ class IncomeDetails : AppCompatActivity() {
                         val index = incomeList.indexOfFirst { it.id == income.id }
                         incomeList[index] = income
                     }
-                    if (FilterIncome.mFiltersSet) {
+                    if (FilterIncome.isFilterSet()) {
                         val intent = Intent(this, FilterIncome::class.java)
                         val bundle = Bundle()
                         bundle.putParcelable(INCOME_MESSAGE, income)
+                        bundle.putString(OPERATION_MESSAGE, Operations.FILTER_ADD_INCOME.name)
                         intent.putExtras(bundle)
-                        startActivityForResult(intent, FILTER_INCOME_CODE)
+                        startActivityForResult(intent, Operations.FILTER_ADD_INCOME.code)
                     } else {
                         val returnIntent = Intent()
                         setResult(Activity.RESULT_OK, returnIntent)
@@ -183,7 +189,7 @@ class IncomeDetails : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == FILTER_INCOME_CODE) {
+            if (requestCode == Operations.FILTER_ADD_INCOME.code || requestCode == Operations.FILTER_DELETE_INCOME.code) {
                 val returnIntent = Intent()
                 setResult(Activity.RESULT_OK, returnIntent)
                 finish()

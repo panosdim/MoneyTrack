@@ -2,11 +2,6 @@ package com.panosdim.moneytrack.network
 
 import org.json.JSONObject
 
-const val LOGGEDOUT_MESSAGE = "com.panosdim.moneytrack.LOGGEDOUT"
-const val EXPENSE_MESSAGE = "com.panosdim.moneytrack.EXPENSE"
-const val INCOME_MESSAGE = "com.panosdim.moneytrack.INCOME"
-const val CATEGORY_MESSAGE = "com.panosdim.moneytrack.CATEGORY"
-
 fun checkForActiveSession(mCallback: (result: String) -> Unit) {
     GetJsonData(mCallback).execute("php/session.php")
 }

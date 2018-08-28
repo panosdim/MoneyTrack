@@ -11,7 +11,6 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.Toast
-import com.panosdim.moneytrack.network.LOGGEDOUT_MESSAGE
 import com.panosdim.moneytrack.network.checkForActiveSession
 import com.panosdim.moneytrack.network.login
 import kotlinx.android.synthetic.main.activity_login.*

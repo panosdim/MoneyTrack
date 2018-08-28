@@ -34,13 +34,6 @@ import org.json.JSONObject
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
-
-const val INCOME_CODE = 0
-const val EXPENSE_CODE = 1
-const val CATEGORY_CODE = 2
-const val FILTER_INCOME_CODE = 3
-const val FILTER_EXPENSE_CODE = 4
-
 class MainActivity : AppCompatActivity() {
 
     /**
@@ -106,15 +99,15 @@ class MainActivity : AppCompatActivity() {
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(this, IncomeDetails::class.java)
-                    startActivityForResult(intent, INCOME_CODE)
+                    startActivityForResult(intent, Operations.INCOME.code)
                 }
                 1 -> {
                     val intent = Intent(this, ExpenseDetails::class.java)
-                    startActivityForResult(intent, EXPENSE_CODE)
+                    startActivityForResult(intent, Operations.EXPENSE.code)
                 }
                 2 -> {
                     val intent = Intent(this, CategoryDetails::class.java)
-                    startActivityForResult(intent, CATEGORY_CODE)
+                    startActivityForResult(intent, Operations.CATEGORY.code)
                 }
             }
         }
@@ -138,30 +131,30 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == CATEGORY_CODE) {
+            if (requestCode == Operations.CATEGORY.code) {
                 container.rvCategories.adapter.notifyDataSetChanged()
                 // Fetch again expenses if we change category name
                 expensesList.clear()
                 getExpenses(::expenseTask)
             }
 
-            if (requestCode == INCOME_CODE) {
+            if (requestCode == Operations.INCOME.code) {
                 sortIncome()
                 calculateIncomeTotal()
             }
 
-            if (requestCode == EXPENSE_CODE) {
-                container.rvExpenses.adapter.notifyDataSetChanged()
+            if (requestCode == Operations.EXPENSE.code) {
+                sortExpenses()
                 calculateExpensesTotal()
             }
 
-            if (requestCode == FILTER_INCOME_CODE) {
+            if (requestCode == Operations.FILTER_INCOME.code) {
                 sortIncome()
                 calculateIncomeTotal()
             }
 
-            if (requestCode == FILTER_EXPENSE_CODE) {
-                container.rvExpenses.adapter.notifyDataSetChanged()
+            if (requestCode == Operations.FILTER_EXPENSE.code) {
+                sortExpenses()
                 calculateExpensesTotal()
             }
         }
@@ -205,7 +198,7 @@ class MainActivity : AppCompatActivity() {
                 val item = resp.getJSONObject(inc)
                 expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
             }
-            container.rvExpenses?.adapter?.notifyDataSetChanged()
+            sortExpenses()
             calculateExpensesTotal()
         }
     }
@@ -225,11 +218,11 @@ class MainActivity : AppCompatActivity() {
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(this, FilterIncome::class.java)
-                    startActivityForResult(intent, FILTER_INCOME_CODE)
+                    startActivityForResult(intent, Operations.FILTER_INCOME.code)
                 }
                 1 -> {
                     val intent = Intent(this, FilterExpenses::class.java)
-                    startActivityForResult(intent, FILTER_EXPENSE_CODE)
+                    startActivityForResult(intent, Operations.FILTER_EXPENSE.code)
                 }
             }
             true
@@ -241,8 +234,7 @@ class MainActivity : AppCompatActivity() {
                     container.sortIncome.visibility = if (container.sortIncome.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                 }
                 1 -> {
-                    val intent = Intent(this, FilterExpenses::class.java)
-                    startActivityForResult(intent, FILTER_EXPENSE_CODE)
+                    container.sortExpenses.visibility = if (container.sortExpenses.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                 }
             }
             true
@@ -273,9 +265,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sortIncome() {
-        when (container.rgField?.checkedRadioButtonId) {
+        when (container.rgIncField?.checkedRadioButtonId) {
             R.id.rbDate -> {
-                when (container.rgDirection?.checkedRadioButtonId) {
+                when (container.rgIncDirection?.checkedRadioButtonId) {
                     R.id.rbAscending -> {
                         incomeList.sortBy { it.date }
                     }
@@ -286,7 +278,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.rbSalary -> {
-                when (container.rgDirection?.checkedRadioButtonId) {
+                when (container.rgIncDirection?.checkedRadioButtonId) {
                     R.id.rbAscending -> {
                         incomeList.sortBy { it.salary.toDouble() }
                     }
@@ -297,7 +289,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.rbComment -> {
-                when (container.rgDirection?.checkedRadioButtonId) {
+                when (container.rgIncDirection?.checkedRadioButtonId) {
                     R.id.rbAscending -> {
                         incomeList.sortBy { it.comment }
                     }
@@ -311,6 +303,58 @@ class MainActivity : AppCompatActivity() {
             }
         }
         container.rvIncome?.adapter?.notifyDataSetChanged()
+    }
+
+    fun sortExpenses() {
+        when (container.rgExpField?.checkedRadioButtonId) {
+            R.id.rbExpDate -> {
+                when (container.rgExpDirection?.checkedRadioButtonId) {
+                    R.id.rbExpAscending -> {
+                        expensesList.sortBy { it.date }
+                    }
+                    R.id.rbExpDescending -> {
+                        expensesList.sortByDescending { it.date }
+                    }
+                }
+            }
+
+            R.id.rbAmount -> {
+                when (container.rgExpDirection?.checkedRadioButtonId) {
+                    R.id.rbExpAscending -> {
+                        expensesList.sortBy { it.amount.toDouble() }
+                    }
+                    R.id.rbExpDescending -> {
+                        expensesList.sortByDescending { it.amount.toDouble() }
+                    }
+                }
+            }
+
+            R.id.rbCategory -> {
+                when (container.rgExpDirection?.checkedRadioButtonId) {
+                    R.id.rbExpAscending -> {
+                        expensesList.sortBy { it.category }
+                    }
+                    R.id.rbExpDescending -> {
+                        expensesList.sortByDescending { it.category }
+                    }
+                }
+            }
+
+            R.id.rbExpComment -> {
+                when (container.rgExpDirection?.checkedRadioButtonId) {
+                    R.id.rbExpAscending -> {
+                        expensesList.sortBy { it.comment }
+                    }
+                    R.id.rbExpDescending -> {
+                        expensesList.sortByDescending { it.comment }
+                    }
+                }
+            }
+
+            else -> {
+            }
+        }
+        container.rvExpenses?.adapter?.notifyDataSetChanged()
     }
 
     /**
@@ -359,11 +403,11 @@ class MainActivity : AppCompatActivity() {
                     incomeRV.adapter = incomeViewAdapter
 
                     // Sort Income By Date, Salary and Comment
-                    incomeView.rgField.setOnCheckedChangeListener { _, _ ->
+                    incomeView.rgIncField.setOnCheckedChangeListener { _, _ ->
                         sortIncome()
                     }
 
-                    incomeView.rgDirection.setOnCheckedChangeListener { _, _ ->
+                    incomeView.rgIncDirection.setOnCheckedChangeListener { _, _ ->
                         sortIncome()
                     }
 
@@ -380,24 +424,12 @@ class MainActivity : AppCompatActivity() {
                     expenseRV.adapter = expenseViewAdapter
 
                     // Sort Expenses By Date, Expense, Category and Comment
-                    expenseView.lblExpDate.setOnClickListener {
-                        sortExpenses(SortField.DATE)
-                        expenseRV.adapter.notifyDataSetChanged()
+                    expenseView.rgExpField.setOnCheckedChangeListener { _, _ ->
+                        sortExpenses()
                     }
 
-                    expenseView.lblExpense.setOnClickListener {
-                        sortExpenses(SortField.EXPENSE)
-                        expenseRV.adapter.notifyDataSetChanged()
-                    }
-
-                    expenseView.lblCategory.setOnClickListener {
-                        sortExpenses(SortField.CATEGORY)
-                        expenseRV.adapter.notifyDataSetChanged()
-                    }
-
-                    expenseView.lblExpComment.setOnClickListener {
-                        sortExpenses(SortField.COMMENT)
-                        expenseRV.adapter.notifyDataSetChanged()
+                    expenseView.rgExpDirection.setOnCheckedChangeListener { _, _ ->
+                        sortExpenses()
                     }
 
                     calculateExpensesTotal()
@@ -450,9 +482,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         private fun sortIncome() {
-            when (incomeView.rgField?.checkedRadioButtonId) {
+            when (incomeView.rgIncField?.checkedRadioButtonId) {
                 R.id.rbDate -> {
-                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
                         R.id.rbAscending -> {
                             incomeList.sortBy { it.date }
                         }
@@ -463,7 +495,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.rbSalary -> {
-                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
                         R.id.rbAscending -> {
                             incomeList.sortBy { it.salary.toDouble() }
                         }
@@ -474,7 +506,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.rbComment -> {
-                    when (incomeView.rgDirection?.checkedRadioButtonId) {
+                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
                         R.id.rbAscending -> {
                             incomeList.sortBy { it.comment }
                         }
@@ -490,22 +522,56 @@ class MainActivity : AppCompatActivity() {
             incomeView.rvIncome?.adapter?.notifyDataSetChanged()
         }
 
-        private fun sortExpenses(field: SortField) {
-            if (mExpensesSorted.sorted == field) {
-                expensesList.reverse()
-                mExpensesSorted.direction = if (mExpensesSorted.direction == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
-            } else {
-                mExpensesSorted.sorted = field
-                mExpensesSorted.direction = if (field == SortField.DATE) SortDirection.DESCENDING else SortDirection.ASCENDING
-                when (field) {
-                    SortField.DATE -> expensesList.sortByDescending { it.date }
-                    SortField.EXPENSE -> expensesList.sortBy { it.amount.toDouble() }
-                    SortField.CATEGORY -> expensesList.sortBy { it.category }
-                    SortField.COMMENT -> expensesList.sortBy { it.comment }
-                    else -> {
+        private fun sortExpenses() {
+            when (expenseView.rgExpField?.checkedRadioButtonId) {
+                R.id.rbExpDate -> {
+                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
+                        R.id.rbExpAscending -> {
+                            expensesList.sortBy { it.date }
+                        }
+                        R.id.rbExpDescending -> {
+                            expensesList.sortByDescending { it.date }
+                        }
                     }
                 }
+
+                R.id.rbAmount -> {
+                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
+                        R.id.rbExpAscending -> {
+                            expensesList.sortBy { it.amount.toDouble() }
+                        }
+                        R.id.rbExpDescending -> {
+                            expensesList.sortByDescending { it.amount.toDouble() }
+                        }
+                    }
+                }
+
+                R.id.rbCategory -> {
+                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
+                        R.id.rbExpAscending -> {
+                            expensesList.sortBy { it.category }
+                        }
+                        R.id.rbExpDescending -> {
+                            expensesList.sortByDescending { it.category }
+                        }
+                    }
+                }
+
+                R.id.rbExpComment -> {
+                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
+                        R.id.rbExpAscending -> {
+                            expensesList.sortBy { it.comment }
+                        }
+                        R.id.rbExpDescending -> {
+                            expensesList.sortByDescending { it.comment }
+                        }
+                    }
+                }
+
+                else -> {
+                }
             }
+            expenseView.rvExpenses?.adapter?.notifyDataSetChanged()
         }
 
         private fun expenseItemClicked(expItem: Expense) {
@@ -513,7 +579,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(EXPENSE_MESSAGE, expItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, EXPENSE_CODE)
+            activity.startActivityForResult(intent, Operations.EXPENSE.code)
         }
 
         private fun categoryItemClicked(catItem: Category) {
@@ -521,7 +587,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(CATEGORY_MESSAGE, catItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, CATEGORY_CODE)
+            activity.startActivityForResult(intent, Operations.CATEGORY.code)
         }
 
         private fun incomeItemClicked(incItem: Income) {
@@ -529,7 +595,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(INCOME_MESSAGE, incItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, INCOME_CODE)
+            activity.startActivityForResult(intent, Operations.INCOME.code)
         }
 
         companion object {
@@ -538,7 +604,6 @@ class MainActivity : AppCompatActivity() {
              * fragment.
              */
             private const val ARG_SECTION_NUMBER = "section_number"
-            private var mExpensesSorted = SortedBy(SortField.DATE, SortDirection.DESCENDING)
 
             /**
              * Returns a new instance of this fragment for the given section
@@ -553,19 +618,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    enum class SortField {
-        DATE,
-        SALARY,
-        COMMENT,
-        EXPENSE,
-        CATEGORY
-    }
-
-    enum class SortDirection {
-        ASCENDING,
-        DESCENDING
-    }
-
-    data class SortedBy(var sorted: SortField, var direction: SortDirection)
 }

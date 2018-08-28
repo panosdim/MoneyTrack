@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.Toast
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.categoriesList
-import com.panosdim.moneytrack.network.CATEGORY_MESSAGE
+import com.panosdim.moneytrack.CATEGORY_MESSAGE
 import com.panosdim.moneytrack.network.deleteCategory
 import com.panosdim.moneytrack.network.saveCategory
 import kotlinx.android.synthetic.main.activity_category_details.*
