@@ -17,18 +17,20 @@
         app:cardBackgroundColor="@android:color/holo_blue_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:id="@+id/incTotal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
             android:text="@string/total_income"
             android:textSize="18sp"
             android:textStyle="bold"
-            tools:layout_editor_absoluteX="257dp"
-            tools:layout_editor_absoluteY="105dp" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/rvIncome" />
     </android.support.v7.widget.CardView>
 
     <android.support.v7.widget.RecyclerView
