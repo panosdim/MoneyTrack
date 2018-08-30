@@ -70,7 +70,7 @@ class IncomeDetails : AppCompatActivity() {
             if (income.id != null) {
                 deleteIncome({
                     val res = JSONObject(it)
-                    if (res.getString("status") != "error") {
+                    if (res.getBoolean("success")) {
                         incomeList.remove(income)
                         if (FilterIncome.isFilterSet()) {
                             val intent = Intent(this, FilterIncome::class.java)
@@ -159,9 +159,9 @@ class IncomeDetails : AppCompatActivity() {
 
             saveIncome({
                 val res = JSONObject(it)
-                if (res.getString("status") != "error") {
+                if (res.getBoolean("success")) {
                     if (income.id == null) {
-                        income.id = res.getString("id")
+                        income.id = res.getJSONObject("data").getString("id")
                         incomeList.add(income)
                     } else {
                         val index = incomeList.indexOfFirst { it.id == income.id }

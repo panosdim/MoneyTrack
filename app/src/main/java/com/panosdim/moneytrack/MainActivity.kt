@@ -29,7 +29,6 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_categories.view.*
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.android.synthetic.main.fragment_income.view.*
-import org.json.JSONArray
 import org.json.JSONObject
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -68,29 +67,37 @@ class MainActivity : AppCompatActivity() {
 
         if (incomeList.size == 0) {
             getIncome {
-                if (it.isNotEmpty()) {
+                val res = JSONObject(it)
+                if (res.getBoolean("success")) {
                     // Convert JSON response to List<Income>
-                    val resp = JSONArray(it)
+                    val resp = res.getJSONArray("data")
                     for (inc in 0 until resp.length()) {
                         val item = resp.getJSONObject(inc)
                         incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
                     }
                     container.rvIncome?.adapter?.notifyDataSetChanged()
                     calculateIncomeTotal()
+                } else {
+                    Toast.makeText(this, res.getString("message"),
+                            Toast.LENGTH_LONG).show()
                 }
             }
         }
 
         if (categoriesList.size == 0) {
             getCategories {
-                if (it.isNotEmpty()) {
+                val res = JSONObject(it)
+                if (res.getBoolean("success")) {
                     // Convert JSON response to List<Category>
-                    val resp = JSONArray(it)
+                    val resp = res.getJSONArray("data")
                     for (inc in 0 until resp.length()) {
                         val item = resp.getJSONObject(inc)
                         categoriesList.add(Category(item.getString("id"), item.getString("category")))
                     }
                     container.rvCategories?.adapter?.notifyDataSetChanged()
+                } else {
+                    Toast.makeText(this, res.getString("message"),
+                            Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -117,7 +124,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         checkForActiveSession {
             val res = JSONObject(it)
-            if (!res.getBoolean("loggedIn")) {
+            if (!res.getBoolean("success")) {
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 intent.putExtra(LOGGEDOUT_MESSAGE, true)
@@ -191,15 +198,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun expenseTask(result: String) {
-        if (result.isNotEmpty()) {
-            // Convert JSON response to List<Income>
-            val resp = JSONArray(result)
+        val res = JSONObject(result)
+        if (res.getBoolean("success")) {
+            // Convert JSON response to List<Expense>
+            val resp = res.getJSONArray("data")
             for (inc in 0 until resp.length()) {
                 val item = resp.getJSONObject(inc)
                 expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
             }
             sortExpenses()
             calculateExpensesTotal()
+        } else {
+            Toast.makeText(this, res.getString("message"),
+                    Toast.LENGTH_LONG).show()
         }
     }
 
@@ -252,7 +263,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG).show()
         logout {
             val res = JSONObject(it)
-            if (res.getBoolean("loggedOut")) {
+            if (res.getBoolean("success")) {
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 intent.putExtra(LOGGEDOUT_MESSAGE, true)

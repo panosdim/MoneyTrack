@@ -2,6 +2,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
+    signingConfigs {
+        release {
+            keyAlias 'moneytrack'
+            keyPassword 'moneytrack'
+            storeFile file('C:/Users/padi/moneytrack.jks')
+            storePassword 'moneytrack'
+        }
+    }
     compileSdkVersion 24
     defaultConfig {
         applicationId "com.panosdim.moneytrack"
@@ -15,6 +23,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
         debug {
             debuggable true

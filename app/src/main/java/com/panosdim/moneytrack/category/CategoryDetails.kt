@@ -36,7 +36,7 @@ class CategoryDetails : AppCompatActivity() {
             if (category.id != null) {
                 deleteCategory({
                     val res = JSONObject(it)
-                    if (res.getString("status") != "error") {
+                    if (res.getBoolean("success")) {
                         val returnIntent = Intent()
                         categoriesList.remove(category)
                         setResult(Activity.RESULT_OK, returnIntent)
@@ -94,9 +94,9 @@ class CategoryDetails : AppCompatActivity() {
             category.category = categoryValue
             saveCategory({
                 val res = JSONObject(it)
-                if (res.getString("status") != "error") {
+                if (res.getBoolean("success")) {
                     if (category.id == null) {
-                        category.id = res.getString("id")
+                        category.id = res.getJSONObject("data").getString("id")
                         categoriesList.add(category)
                     } else {
                         val index = categoriesList.indexOfFirst { it.id == category.id }

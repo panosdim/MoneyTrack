@@ -50,7 +50,7 @@ class LoginActivity : AppCompatActivity() {
             showProgress(true)
             checkForActiveSession {
                 val resp = JSONObject(it)
-                if (resp.getBoolean("loggedIn")) {
+                if (resp.getBoolean("success")) {
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     mSnackbar.dismiss()
@@ -110,12 +110,12 @@ class LoginActivity : AppCompatActivity() {
                 showProgress(false)
 
                 val resp = JSONObject(it)
-                if (resp.getString("status") != "error") {
+                if (resp.getBoolean("success")) {
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                 } else {
-                    Toast.makeText(this, "Login Failed. Please check username and password!",
+                    Toast.makeText(this, resp.getString("message"),
                             Toast.LENGTH_LONG).show()
                 }
             }, jsonParam)

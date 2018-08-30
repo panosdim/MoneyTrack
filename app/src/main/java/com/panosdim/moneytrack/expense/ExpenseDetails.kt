@@ -77,7 +77,7 @@ class ExpenseDetails : AppCompatActivity() {
             if (expense.id != null) {
                 deleteExpense({
                     val res = JSONObject(it)
-                    if (res.getString("status") != "error") {
+                    if (res.getBoolean("success")) {
                         expensesList.remove(expense)
                         if (FilterExpenses.isFilterSet()) {
                             val intent = Intent(this, FilterExpenses::class.java)
@@ -170,9 +170,9 @@ class ExpenseDetails : AppCompatActivity() {
 
             saveExpense({
                 val res = JSONObject(it)
-                if (res.getString("status") != "error") {
+                if (res.getBoolean("success")) {
                     if (expense.id == null) {
-                        expense.id = res.getString("id")
+                        expense.id = res.getJSONObject("data").getString("id")
                         expensesList.add(expense)
                     } else {
                         val index = expensesList.indexOfFirst { it.id == expense.id }
