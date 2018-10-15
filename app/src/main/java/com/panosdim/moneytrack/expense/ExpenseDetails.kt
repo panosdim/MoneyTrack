@@ -75,8 +75,8 @@ class ExpenseDetails : AppCompatActivity() {
 
         btnDelete.setOnClickListener {
             if (expense.id != null) {
-                deleteExpense({
-                    val res = JSONObject(it)
+                deleteExpense({ exp ->
+                    val res = JSONObject(exp)
                     if (res.getBoolean("success")) {
                         expensesList.remove(expense)
                         if (FilterExpenses.isFilterSet()) {
@@ -175,7 +175,7 @@ class ExpenseDetails : AppCompatActivity() {
                         expense.id = res.getJSONObject("data").getString("id")
                         expensesList.add(expense)
                     } else {
-                        val index = expensesList.indexOfFirst { it.id == expense.id }
+                        val index = expensesList.indexOfFirst { exp -> exp.id == expense.id }
                         expensesList[index] = expense
                     }
                     if (FilterExpenses.isFilterSet()) {
@@ -198,7 +198,7 @@ class ExpenseDetails : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == Operations.FILTER_ADD_EXPENSE.code || requestCode == Operations.FILTER_DELETE_EXPENSE.code) {
                 val returnIntent = Intent()

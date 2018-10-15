@@ -68,8 +68,8 @@ class IncomeDetails : AppCompatActivity() {
 
         btnDelete.setOnClickListener {
             if (income.id != null) {
-                deleteIncome({
-                    val res = JSONObject(it)
+                deleteIncome({ inc ->
+                    val res = JSONObject(inc)
                     if (res.getBoolean("success")) {
                         incomeList.remove(income)
                         if (FilterIncome.isFilterSet()) {
@@ -164,7 +164,7 @@ class IncomeDetails : AppCompatActivity() {
                         income.id = res.getJSONObject("data").getString("id")
                         incomeList.add(income)
                     } else {
-                        val index = incomeList.indexOfFirst { it.id == income.id }
+                        val index = incomeList.indexOfFirst { inc -> inc.id == income.id }
                         incomeList[index] = income
                     }
                     if (FilterIncome.isFilterSet()) {
@@ -187,7 +187,7 @@ class IncomeDetails : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == Operations.FILTER_ADD_INCOME.code || requestCode == Operations.FILTER_DELETE_INCOME.code) {
                 val returnIntent = Intent()

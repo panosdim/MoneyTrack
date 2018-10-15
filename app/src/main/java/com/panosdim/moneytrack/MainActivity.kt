@@ -136,10 +136,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == Operations.CATEGORY.code) {
-                container.rvCategories.adapter.notifyDataSetChanged()
+                container.rvCategories.adapter?.notifyDataSetChanged()
                 // Fetch again expenses if we change category name
                 expensesList.clear()
                 getExpenses(::expenseTask)
@@ -590,7 +590,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(EXPENSE_MESSAGE, expItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, Operations.EXPENSE.code)
+            activity?.startActivityForResult(intent, Operations.EXPENSE.code)
         }
 
         private fun categoryItemClicked(catItem: Category) {
@@ -598,7 +598,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(CATEGORY_MESSAGE, catItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, Operations.CATEGORY.code)
+            activity?.startActivityForResult(intent, Operations.CATEGORY.code)
         }
 
         private fun incomeItemClicked(incItem: Income) {
@@ -606,7 +606,7 @@ class MainActivity : AppCompatActivity() {
             val bundle = Bundle()
             bundle.putParcelable(INCOME_MESSAGE, incItem)
             intent.putExtras(bundle)
-            activity.startActivityForResult(intent, Operations.INCOME.code)
+            activity?.startActivityForResult(intent, Operations.INCOME.code)
         }
 
         companion object {
