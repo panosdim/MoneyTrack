@@ -38,7 +38,6 @@ class LoginActivity : AppCompatActivity() {
         })
 
         btnLogin.setOnClickListener { attemptLogin() }
-
         // Check if we return from logout button
         // Get the Intent that started this activity and extract the string
         val loggedOut = intent.getBooleanExtra(LOGGEDOUT_MESSAGE, false)

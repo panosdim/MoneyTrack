@@ -5,20 +5,20 @@
 
     <item
         android:id="@+id/action_sort"
-        android:icon="@android:drawable/ic_menu_sort_alphabetically"
-        android:title="@string/filter"
+        android:icon="@drawable/ic_action_sort"
+        android:title="@string/sort_by"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_filter"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_action_filter"
         android:title="@string/filter"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_logout"
         android:icon="@drawable/ic_action_exit"
-        android:title="@string/filter"
+        android:title="@string/logout"
         app:showAsAction="ifRoom" />
 
 </menu>

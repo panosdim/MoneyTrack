@@ -34,9 +34,10 @@
                                   <option name="values">
                                     <map>
                                       <entry key="assetType" value="IMAGE" />
-                                      <entry key="imageAsset" value="C:\Users\padi\Downloads\2x\baseline_add_white_36dp.png" />
-                                      <entry key="outputName" value="ic_action_add" />
-                                      <entry key="theme" value="HOLO_DARK" />
+                                      <entry key="imageAsset" value="F:\downloads\icons8-alphabetical-sorting-48.png" />
+                                      <entry key="outputName" value="ic_action_sort" />
+                                      <entry key="theme" value="CUSTOM" />
+                                      <entry key="themeColor" value="fde74c" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -60,7 +61,7 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputIconType" value="LAUNCHER_LEGACY" />
+                            <entry key="outputIconType" value="ACTIONBAR" />
                           </map>
                         </option>
                       </PersistentState>

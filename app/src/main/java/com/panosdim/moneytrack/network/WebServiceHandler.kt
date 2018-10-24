@@ -17,7 +17,7 @@ class WebServiceHandler {
     fun performPostCall(requestURL: String,
                         jsonParam: JSONObject): String {
         val url: URL
-        var response = StringBuilder()
+        var response = ""
         try {
             url = URL(baseURL + requestURL)
 
@@ -58,24 +58,18 @@ class WebServiceHandler {
                     }
                 }
 
-                val br = BufferedReader(InputStreamReader(conn.inputStream))
-                for (line in br.lines()) {
-                    response.append(line)
-                }
-            } else {
-                response = StringBuilder()
-
+                response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        return response.toString()
+        return response
     }
 
     fun performGetCall(requestURL: String): String {
         val url: URL
-        val response = StringBuilder()
+        var response = ""
         try {
             url = URL(baseURL + requestURL)
 
@@ -95,18 +89,12 @@ class WebServiceHandler {
             val responseCode = conn.responseCode
 
             if (responseCode == HttpsURLConnection.HTTP_OK) {
-                val br = BufferedReader(InputStreamReader(conn.inputStream))
-                for (line in br.lines()) {
-                    response.append(line)
-                }
-            } else {
-                response.append("ERROR ${conn.responseCode}")
-
+                response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        return response.toString()
+        return response
     }
 
     companion object {

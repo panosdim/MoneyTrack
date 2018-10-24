@@ -31,4 +31,5 @@
     <string name="ascending">Ascending</string>
     <string name="descending">Descending</string>
     <string name="sort_by">Sort By</string>
+    <string name="logout">Logout</string>
 </resources>
