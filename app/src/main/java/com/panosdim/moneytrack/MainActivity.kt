@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        fabAdd.setOnClickListener { _ ->
+        fabAdd.setOnClickListener {
             when (tabs.selectedTabPosition) {
                 0 -> {
                     val intent = Intent(this, IncomeDetails::class.java)
@@ -122,18 +122,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        checkForActiveSession {
+        val jsonParam = JSONObject()
+        jsonParam.put("token", prefs.token)
+        jsonParam.put("selector", prefs.selector)
+        jsonParam.put("series", prefs.series)
+
+        checkForActiveSession({
             val res = JSONObject(it)
             if (!res.getBoolean("success")) {
                 val intent = Intent(this, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 intent.putExtra(LOGGEDOUT_MESSAGE, true)
                 startActivity(intent)
+            } else {
+                prefs.token = res.getString("data")
+                calculateIncomeTotal()
+                calculateExpensesTotal()
             }
-
-            calculateIncomeTotal()
-            calculateExpensesTotal()
-        }
+        }, jsonParam)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -221,7 +227,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_logout -> {
-            logout()
+            Toast.makeText(this, "Logging you out!",
+                    Toast.LENGTH_LONG).show()
+
+            val jsonParam = JSONObject()
+            jsonParam.put("selector", prefs.selector)
+
+            logout ({
+                val res = JSONObject(it)
+                if (res.getBoolean("success")) {
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    intent.putExtra(LOGGEDOUT_MESSAGE, true)
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "Fail to log you out!",
+                            Toast.LENGTH_LONG).show()
+                }
+            }, jsonParam)
             true
         }
 
@@ -255,23 +278,6 @@ class MainActivity : AppCompatActivity() {
             // If we got here, the user's action was not recognized.
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
-        }
-    }
-
-    private fun logout() {
-        Toast.makeText(this, "Logging you out!",
-                Toast.LENGTH_LONG).show()
-        logout {
-            val res = JSONObject(it)
-            if (res.getBoolean("success")) {
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                intent.putExtra(LOGGEDOUT_MESSAGE, true)
-                startActivity(intent)
-            } else {
-                Toast.makeText(this, "Fail to log you out!",
-                        Toast.LENGTH_LONG).show()
-            }
         }
     }
 

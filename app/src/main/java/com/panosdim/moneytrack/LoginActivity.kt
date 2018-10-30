@@ -14,6 +14,7 @@ import android.widget.Toast
 import com.panosdim.moneytrack.network.checkForActiveSession
 import com.panosdim.moneytrack.network.login
 import kotlinx.android.synthetic.main.activity_login.*
+import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -38,6 +39,7 @@ class LoginActivity : AppCompatActivity() {
         })
 
         btnLogin.setOnClickListener { attemptLogin() }
+
         // Check if we return from logout button
         // Get the Intent that started this activity and extract the string
         val loggedOut = intent.getBooleanExtra(LOGGEDOUT_MESSAGE, false)
@@ -47,18 +49,29 @@ class LoginActivity : AppCompatActivity() {
             mSnackbar = Snackbar.make(root_layout, "Checking for active session!", Snackbar.LENGTH_LONG)
             mSnackbar.show()
             showProgress(true)
-            checkForActiveSession {
-                val resp = JSONObject(it)
-                if (resp.getBoolean("success")) {
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    mSnackbar.dismiss()
-                    startActivity(intent)
-                } else {
-                    showProgress(false)
-                    mSnackbar.dismiss()
+
+            val jsonParam = JSONObject()
+            jsonParam.put("token", prefs.token)
+            jsonParam.put("selector", prefs.selector)
+            jsonParam.put("series", prefs.series)
+
+            checkForActiveSession({
+                try {
+                    val resp = JSONObject(it)
+                    if (resp.getBoolean("success")) {
+                        prefs.token = resp.getString("data")
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        mSnackbar.dismiss()
+                        startActivity(intent)
+                    } else {
+                        showProgress(false)
+                        mSnackbar.dismiss()
+                    }
+                } catch (e: JSONException) {
+                    e.toString()
                 }
-            }
+            }, jsonParam)
         }
     }
 
@@ -110,6 +123,10 @@ class LoginActivity : AppCompatActivity() {
 
                 val resp = JSONObject(it)
                 if (resp.getBoolean("success")) {
+                    val data = resp.getJSONObject("data")
+                    prefs.selector = data.getString("selector")
+                    prefs.token = data.getString("token")
+                    prefs.series = data.getString("series")
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)

@@ -2,16 +2,16 @@ package com.panosdim.moneytrack.network
 
 import org.json.JSONObject
 
-fun checkForActiveSession(mCallback: (result: String) -> Unit) {
-    GetJsonData(mCallback).execute("session.php")
+fun checkForActiveSession(mCallback: (result: String) -> Unit, credentials: JSONObject) {
+    PutJsonData(mCallback, "session.php").execute(credentials)
 }
 
 fun login(mCallback: (result: String) -> Unit, credentials: JSONObject) {
     PutJsonData(mCallback, "login.php").execute(credentials)
 }
 
-fun logout(mCallback: (result: String) -> Unit) {
-    GetJsonData(mCallback).execute("logout.php")
+fun logout(mCallback: (result: String) -> Unit, credentials: JSONObject) {
+    PutJsonData(mCallback, "logout.php").execute(credentials)
 }
 
 fun getExpenses(mCallback: (result: String) -> Unit) {

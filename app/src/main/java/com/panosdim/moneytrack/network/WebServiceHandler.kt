@@ -11,7 +11,7 @@ import javax.net.ssl.HttpsURLConnection
 
 
 class WebServiceHandler {
-    private val baseURL = "http://moneytrack.cc.nf/api/v1/"
+    private val baseURL = "https://moneytrack.cc.nf/api/v2/"
     private val cookiesHeader = "Set-Cookie"
 
     fun performPostCall(requestURL: String,
