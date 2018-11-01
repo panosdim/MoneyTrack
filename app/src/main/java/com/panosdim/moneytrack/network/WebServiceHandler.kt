@@ -25,8 +25,8 @@ class WebServiceHandler {
 
             CookieHandler.setDefault(msCookieManager)
 
-            conn.readTimeout = 15000
-            conn.connectTimeout = 15000
+            conn.readTimeout = 5000
+            conn.connectTimeout = 5000
             conn.requestMethod = "POST"
             conn.doOutput = true
 
@@ -62,6 +62,10 @@ class WebServiceHandler {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            val json = JSONObject()
+            json.put("success", false)
+            json.put("message", "An Network error occurred please check you are connected to internet.")
+            response = json.toString()
         }
 
         return response
@@ -74,8 +78,8 @@ class WebServiceHandler {
             url = URL(baseURL + requestURL)
 
             val conn = url.openConnection() as HttpURLConnection
-            conn.readTimeout = 15000
-            conn.connectTimeout = 15000
+            conn.readTimeout = 5000
+            conn.connectTimeout = 5000
             conn.requestMethod = "GET"
 
             if (msCookieManager.cookieStore.cookies.size == 0) {
@@ -93,7 +97,12 @@ class WebServiceHandler {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            val json = JSONObject()
+            json.put("success", false)
+            json.put("message", "An Network error occurred please check you are connected to internet.")
+            response = json.toString()
         }
+
         return response
     }
 
