@@ -33,6 +33,7 @@ import org.json.JSONObject
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
+
 class MainActivity : AppCompatActivity() {
 
     /**
@@ -91,8 +92,8 @@ class MainActivity : AppCompatActivity() {
                 if (res.getBoolean("success")) {
                     // Convert JSON response to List<Category>
                     val resp = res.getJSONArray("data")
-                    for (inc in 0 until resp.length()) {
-                        val item = resp.getJSONObject(inc)
+                    for (cat in 0 until resp.length()) {
+                        val item = resp.getJSONObject(cat)
                         categoriesList.add(Category(item.getString("id"), item.getString("category")))
                     }
                     container.rvCategories?.adapter?.notifyDataSetChanged()
@@ -432,6 +433,26 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     calculateIncomeTotal()
+
+                    incomeView.swipeContainerIncome.setOnRefreshListener {
+                        incomeList.clear()
+                        getIncome {
+                            val res = JSONObject(it)
+                            if (res.getBoolean("success")) {
+                                // Convert JSON response to List<Income>
+                                val resp = res.getJSONArray("data")
+                                for (inc in 0 until resp.length()) {
+                                    val item = resp.getJSONObject(inc)
+                                    incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+                                }
+                                sortIncome()
+                                calculateIncomeTotal()
+                                incomeView.swipeContainerIncome.isRefreshing = false
+                                incomeView.rvIncome?.adapter?.notifyDataSetChanged()
+                            }
+                        }
+                    }
+
                     return incomeView
                 }
                 2 -> {
@@ -453,6 +474,26 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     calculateExpensesTotal()
+
+                    expenseView.swipeContainerExpenses.setOnRefreshListener {
+                        expensesList.clear()
+                        getExpenses {
+                            val res = JSONObject(it)
+                            if (res.getBoolean("success")) {
+                                // Convert JSON response to List<Expense>
+                                val resp = res.getJSONArray("data")
+                                for (inc in 0 until resp.length()) {
+                                    val item = resp.getJSONObject(inc)
+                                    expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
+                                }
+                                sortExpenses()
+                                calculateExpensesTotal()
+                                expenseView.swipeContainerExpenses.isRefreshing = false
+                                expenseView.rvExpenses?.adapter?.notifyDataSetChanged()
+                            }
+                        }
+                    }
+
                     return expenseView
                 }
                 3 -> {
@@ -463,6 +504,25 @@ class MainActivity : AppCompatActivity() {
                     categoryRV.setHasFixedSize(true)
                     categoryRV.layoutManager = LinearLayoutManager(categoryView.context)
                     categoryRV.adapter = categoryViewAdapter
+
+                    categoryView.swipeContainerCategories.setOnRefreshListener {
+                        categoriesList.clear()
+                        getCategories {
+                            val res = JSONObject(it)
+                            if (res.getBoolean("success")) {
+                                // Convert JSON response to List<Category>
+                                val resp = res.getJSONArray("data")
+                                for (cat in 0 until resp.length()) {
+                                    val item = resp.getJSONObject(cat)
+                                    categoriesList.add(Category(item.getString("id"), item.getString("category")))
+                                }
+
+                                categoryView.swipeContainerCategories.isRefreshing = false
+                                categoryView.rvCategories?.adapter?.notifyDataSetChanged()
+                            }
+                        }
+                    }
+
                     return categoryView
                 }
                 else -> {
