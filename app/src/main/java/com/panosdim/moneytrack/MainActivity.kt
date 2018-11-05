@@ -78,8 +78,9 @@ class MainActivity : AppCompatActivity() {
                     container.rvIncome?.adapter?.notifyDataSetChanged()
                     calculateIncomeTotal()
                 } else {
-                    Toast.makeText(this, res.getString("message"),
-                            Toast.LENGTH_LONG).show()
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                 }
             }
         }
@@ -96,8 +97,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     container.rvCategories?.adapter?.notifyDataSetChanged()
                 } else {
-                    Toast.makeText(this, res.getString("message"),
-                            Toast.LENGTH_LONG).show()
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                 }
             }
         }
@@ -215,8 +217,9 @@ class MainActivity : AppCompatActivity() {
             sortExpenses()
             calculateExpensesTotal()
         } else {
-            Toast.makeText(this, res.getString("message"),
-                    Toast.LENGTH_LONG).show()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
         }
     }
 
