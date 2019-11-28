@@ -1,700 +1,151 @@
 package com.panosdim.moneytrack
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.TabLayout
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentPagerAdapter
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.view.*
+import android.view.Menu
+import android.view.View
 import android.widget.Toast
-import com.panosdim.moneytrack.category.Category
-import com.panosdim.moneytrack.category.CategoryAdapter
-import com.panosdim.moneytrack.category.CategoryDetails
-import com.panosdim.moneytrack.expense.Expense
-import com.panosdim.moneytrack.expense.ExpenseAdapter
-import com.panosdim.moneytrack.expense.ExpenseDetails
-import com.panosdim.moneytrack.expense.FilterExpenses
-import com.panosdim.moneytrack.income.FilterIncome
-import com.panosdim.moneytrack.income.Income
-import com.panosdim.moneytrack.income.IncomeAdapter
-import com.panosdim.moneytrack.income.IncomeDetails
-import com.panosdim.moneytrack.network.*
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.tabs.TabLayout
+import com.panosdim.moneytrack.adapters.TabAdapter
+import com.panosdim.moneytrack.dialogs.CategoryDialog
+import com.panosdim.moneytrack.dialogs.ExpenseDialog
+import com.panosdim.moneytrack.dialogs.IncomeDialog
+import com.panosdim.moneytrack.dialogs.IncomeFilterDialog
+import com.panosdim.moneytrack.fragments.CategoriesFragment
+import com.panosdim.moneytrack.fragments.DashboardFragment
+import com.panosdim.moneytrack.fragments.ExpensesFragment
+import com.panosdim.moneytrack.fragments.IncomeFragment
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.fragment_categories.view.*
-import kotlinx.android.synthetic.main.fragment_expenses.view.*
-import kotlinx.android.synthetic.main.fragment_income.view.*
-import org.json.JSONObject
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
+import kotlinx.android.synthetic.main.fragment_expenses.*
+import kotlinx.android.synthetic.main.fragment_income.*
 
 
 class MainActivity : AppCompatActivity() {
-
-    /**
-     * The [android.support.v4.view.PagerAdapter] that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * [android.support.v4.app.FragmentStatePagerAdapter].
-     */
-    private var mSectionsPagerAdapter: SectionsPagerAdapter? = null
+    private val dashboardFragment = DashboardFragment()
+    private val incomeFragment = IncomeFragment()
+    private val expensesFragment = ExpensesFragment()
+    private val categoriesFragment = CategoriesFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setSupportActionBar(toolbar)
+        setupBottomBar()
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
+        val adapter = TabAdapter(supportFragmentManager)
+        adapter.addFragment(dashboardFragment, "Dashboard")
+        adapter.addFragment(incomeFragment, "Income")
+        adapter.addFragment(expensesFragment, "Expenses")
+        adapter.addFragment(categoriesFragment, "Categories")
+        viewPager.adapter = adapter
 
-        // Set up the ViewPager with the sections adapter.
-        container.adapter = mSectionsPagerAdapter
+        tabs.setupWithViewPager(viewPager)
+        tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabReselected(p0: TabLayout.Tab?) {
+                // Not needed
+            }
 
-        container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
-        tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
+            override fun onTabUnselected(p0: TabLayout.Tab?) {
+                // Not needed
+            }
 
-        if (expensesList.size == 0) {
-            getExpenses(::expenseTask)
-        }
-
-        if (incomeList.size == 0) {
-            getIncome {
-                val res = JSONObject(it)
-                if (res.getBoolean("success")) {
-                    // Convert JSON response to List<Income>
-                    val resp = res.getJSONArray("data")
-                    for (inc in 0 until resp.length()) {
-                        val item = resp.getJSONObject(inc)
-                        incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                invalidateOptionsMenu()
+                when (tab.position) {
+                    0 -> {
+                        addNew.hide()
                     }
-                    container.rvIncome?.adapter?.notifyDataSetChanged()
-                    calculateIncomeTotal()
-                } else {
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
+                    else -> {
+                        addNew.show()
+                    }
                 }
             }
-        }
+        })
 
-        if (categoriesList.size == 0) {
-            getCategories {
-                val res = JSONObject(it)
-                if (res.getBoolean("success")) {
-                    // Convert JSON response to List<Category>
-                    val resp = res.getJSONArray("data")
-                    for (cat in 0 until resp.length()) {
-                        val item = resp.getJSONObject(cat)
-                        categoriesList.add(Category(item.getString("id"), item.getString("category")))
-                    }
-                    container.rvCategories?.adapter?.notifyDataSetChanged()
-                } else {
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                }
-            }
-        }
-
-        fabAdd.setOnClickListener {
+        addNew.setOnClickListener {
             when (tabs.selectedTabPosition) {
-                0 -> {
-                    val intent = Intent(this, IncomeDetails::class.java)
-                    startActivityForResult(intent, Operations.INCOME.code)
-                }
                 1 -> {
-                    val intent = Intent(this, ExpenseDetails::class.java)
-                    startActivityForResult(intent, Operations.EXPENSE.code)
+                    IncomeDialog(
+                        this,
+                        adapter.getItem(tabs.selectedTabPosition) as IncomeFragment
+                    ).show()
                 }
                 2 -> {
-                    val intent = Intent(this, CategoryDetails::class.java)
-                    startActivityForResult(intent, Operations.CATEGORY.code)
-                }
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val jsonParam = JSONObject()
-        jsonParam.put("token", prefs.token)
-        jsonParam.put("selector", prefs.selector)
-        jsonParam.put("series", prefs.series)
-
-        checkForActiveSession({
-            val res = JSONObject(it)
-            if (!res.getBoolean("success")) {
-                val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                intent.putExtra(LOGGEDOUT_MESSAGE, true)
-                startActivity(intent)
-            } else {
-                prefs.token = res.getString("data")
-                calculateIncomeTotal()
-                calculateExpensesTotal()
-            }
-        }, jsonParam)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == Operations.CATEGORY.code) {
-                container.rvCategories.adapter?.notifyDataSetChanged()
-                // Fetch again expenses if we change category name
-                expensesList.clear()
-                getExpenses(::expenseTask)
-            }
-
-            if (requestCode == Operations.INCOME.code) {
-                sortIncome()
-                calculateIncomeTotal()
-            }
-
-            if (requestCode == Operations.EXPENSE.code) {
-                sortExpenses()
-                calculateExpensesTotal()
-            }
-
-            if (requestCode == Operations.FILTER_INCOME.code) {
-                sortIncome()
-                calculateIncomeTotal()
-            }
-
-            if (requestCode == Operations.FILTER_EXPENSE.code) {
-                sortExpenses()
-                calculateExpensesTotal()
-            }
-        }
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun calculateIncomeTotal() {
-        var total = 0.0
-        for (income in incomeList) {
-            total += income.salary.toDouble()
-        }
-
-        val symbols = DecimalFormatSymbols()
-        symbols.groupingSeparator = '.'
-        symbols.decimalSeparator = ','
-        val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
-
-        container.incTotal?.text = "${getString(R.string.total_income)} ${moneyFormat.format(total)}"
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun calculateExpensesTotal() {
-        var total = 0.0
-        for (expense in expensesList) {
-            total += expense.amount.toDouble()
-        }
-
-        val symbols = DecimalFormatSymbols()
-        symbols.groupingSeparator = '.'
-        symbols.decimalSeparator = ','
-        val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
-
-        container.expTotal?.text = "${getString(R.string.total_expenses)} ${moneyFormat.format(total)}"
-    }
-
-    private fun expenseTask(result: String) {
-        val res = JSONObject(result)
-        if (res.getBoolean("success")) {
-            // Convert JSON response to List<Expense>
-            val resp = res.getJSONArray("data")
-            for (inc in 0 until resp.length()) {
-                val item = resp.getJSONObject(inc)
-                expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
-            }
-            sortExpenses()
-            calculateExpensesTotal()
-        } else {
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-        }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.action_logout -> {
-            Toast.makeText(this, "Logging you out!",
-                    Toast.LENGTH_LONG).show()
-
-            val jsonParam = JSONObject()
-            jsonParam.put("selector", prefs.selector)
-
-            logout ({
-                val res = JSONObject(it)
-                if (res.getBoolean("success")) {
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    intent.putExtra(LOGGEDOUT_MESSAGE, true)
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(this, "Fail to log you out!",
-                            Toast.LENGTH_LONG).show()
-                }
-            }, jsonParam)
-            true
-        }
-
-        R.id.action_filter -> {
-            when (tabs.selectedTabPosition) {
-                0 -> {
-                    val intent = Intent(this, FilterIncome::class.java)
-                    startActivityForResult(intent, Operations.FILTER_INCOME.code)
-                }
-                1 -> {
-                    val intent = Intent(this, FilterExpenses::class.java)
-                    startActivityForResult(intent, Operations.FILTER_EXPENSE.code)
-                }
-            }
-            true
-        }
-
-        R.id.action_sort -> {
-            when (tabs.selectedTabPosition) {
-                0 -> {
-                    container.sortIncome.visibility = if (container.sortIncome.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                }
-                1 -> {
-                    container.sortExpenses.visibility = if (container.sortExpenses.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                }
-            }
-            true
-        }
-
-        else -> {
-            // If we got here, the user's action was not recognized.
-            // Invoke the superclass to handle it.
-            super.onOptionsItemSelected(item)
-        }
-    }
-
-    fun sortIncome() {
-        when (container.rgIncField?.checkedRadioButtonId) {
-            R.id.rbDate -> {
-                when (container.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.date }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.date }
-                    }
-                }
-            }
-
-            R.id.rbSalary -> {
-                when (container.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.salary.toDouble() }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.salary.toDouble() }
-                    }
-                }
-            }
-
-            R.id.rbComment -> {
-                when (container.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.comment }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.comment }
-                    }
-                }
-            }
-
-            else -> {
-            }
-        }
-        container.rvIncome?.adapter?.notifyDataSetChanged()
-    }
-
-    fun sortExpenses() {
-        when (container.rgExpField?.checkedRadioButtonId) {
-            R.id.rbExpDate -> {
-                when (container.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.date }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.date }
-                    }
-                }
-            }
-
-            R.id.rbAmount -> {
-                when (container.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.amount.toDouble() }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.amount.toDouble() }
-                    }
-                }
-            }
-
-            R.id.rbCategory -> {
-                when (container.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.category }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.category }
-                    }
-                }
-            }
-
-            R.id.rbExpComment -> {
-                when (container.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.comment }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.comment }
-                    }
-                }
-            }
-
-            else -> {
-            }
-        }
-        container.rvExpenses?.adapter?.notifyDataSetChanged()
-    }
-
-    /**
-     * A [FragmentPagerAdapter] that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
-
-        override fun getItem(position: Int): Fragment {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1)
-        }
-
-        override fun getCount(): Int {
-            // Show 3 total pages.
-            return 3
-        }
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    class PlaceholderFragment : Fragment() {
-
-        private lateinit var incomeView: View
-        private lateinit var incomeViewAdapter: RecyclerView.Adapter<*>
-
-        private lateinit var expenseView: View
-        private lateinit var expenseViewAdapter: RecyclerView.Adapter<*>
-
-        private lateinit var categoryView: View
-        private lateinit var categoryViewAdapter: RecyclerView.Adapter<*>
-
-        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                                  savedInstanceState: Bundle?): View? {
-
-            return when (arguments?.getInt(ARG_SECTION_NUMBER)) {
-                1 -> {
-                    incomeView = inflater.inflate(R.layout.fragment_income, container, false)
-                    incomeViewAdapter = IncomeAdapter(incomeList) { incItem: Income -> incomeItemClicked(incItem) }
-
-                    val incomeRV = incomeView.rvIncome
-                    incomeRV.setHasFixedSize(true)
-                    incomeRV.layoutManager = LinearLayoutManager(incomeView.context)
-                    incomeRV.adapter = incomeViewAdapter
-
-                    // Sort Income By Date, Salary and Comment
-                    incomeView.rgIncField.setOnCheckedChangeListener { _, _ ->
-                        sortIncome()
-                    }
-
-                    incomeView.rgIncDirection.setOnCheckedChangeListener { _, _ ->
-                        sortIncome()
-                    }
-
-                    calculateIncomeTotal()
-
-                    incomeView.swipeContainerIncome.setOnRefreshListener {
-                        incomeList.clear()
-                        getIncome {
-                            val res = JSONObject(it)
-                            if (res.getBoolean("success")) {
-                                // Convert JSON response to List<Income>
-                                val resp = res.getJSONArray("data")
-                                for (inc in 0 until resp.length()) {
-                                    val item = resp.getJSONObject(inc)
-                                    incomeList.add(Income(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("comment")))
-                                }
-                                sortIncome()
-                                calculateIncomeTotal()
-                                incomeView.swipeContainerIncome.isRefreshing = false
-                                incomeView.rvIncome?.adapter?.notifyDataSetChanged()
-                            }
-                        }
-                    }
-
-                    return incomeView
-                }
-                2 -> {
-                    expenseView = inflater.inflate(R.layout.fragment_expenses, container, false)
-                    expenseViewAdapter = ExpenseAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
-
-                    val expenseRV = expenseView.rvExpenses
-                    expenseRV.setHasFixedSize(true)
-                    expenseRV.layoutManager = LinearLayoutManager(expenseView.context)
-                    expenseRV.adapter = expenseViewAdapter
-
-                    // Sort Expenses By Date, Expense, Category and Comment
-                    expenseView.rgExpField.setOnCheckedChangeListener { _, _ ->
-                        sortExpenses()
-                    }
-
-                    expenseView.rgExpDirection.setOnCheckedChangeListener { _, _ ->
-                        sortExpenses()
-                    }
-
-                    calculateExpensesTotal()
-
-                    expenseView.swipeContainerExpenses.setOnRefreshListener {
-                        expensesList.clear()
-                        getExpenses {
-                            val res = JSONObject(it)
-                            if (res.getBoolean("success")) {
-                                // Convert JSON response to List<Expense>
-                                val resp = res.getJSONArray("data")
-                                for (inc in 0 until resp.length()) {
-                                    val item = resp.getJSONObject(inc)
-                                    expensesList.add(Expense(item.getString("id"), item.getString("date"), item.getString("amount"), item.getString("category"), item.getString("comment")))
-                                }
-                                sortExpenses()
-                                calculateExpensesTotal()
-                                expenseView.swipeContainerExpenses.isRefreshing = false
-                                expenseView.rvExpenses?.adapter?.notifyDataSetChanged()
-                            }
-                        }
-                    }
-
-                    return expenseView
+                    ExpenseDialog(
+                        this,
+                        adapter.getItem(tabs.selectedTabPosition) as ExpensesFragment
+                    ).show()
                 }
                 3 -> {
-                    categoryView = inflater.inflate(R.layout.fragment_categories, container, false)
-                    categoryViewAdapter = CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
-
-                    val categoryRV = categoryView.rvCategories
-                    categoryRV.setHasFixedSize(true)
-                    categoryRV.layoutManager = LinearLayoutManager(categoryView.context)
-                    categoryRV.adapter = categoryViewAdapter
-
-                    categoryView.swipeContainerCategories.setOnRefreshListener {
-                        categoriesList.clear()
-                        getCategories {
-                            val res = JSONObject(it)
-                            if (res.getBoolean("success")) {
-                                // Convert JSON response to List<Category>
-                                val resp = res.getJSONArray("data")
-                                for (cat in 0 until resp.length()) {
-                                    val item = resp.getJSONObject(cat)
-                                    categoriesList.add(Category(item.getString("id"), item.getString("category")))
-                                }
-
-                                categoryView.swipeContainerCategories.isRefreshing = false
-                                categoryView.rvCategories?.adapter?.notifyDataSetChanged()
-                            }
-                        }
-                    }
-
-                    return categoryView
-                }
-                else -> {
-                    null
+                    CategoryDialog(
+                        this,
+                        adapter.getItem(tabs.selectedTabPosition) as CategoriesFragment
+                    ).show()
                 }
             }
         }
+    }
 
-        @SuppressLint("SetTextI18n")
-        private fun calculateIncomeTotal() {
-            var total = 0.0
-            for (income in incomeList) {
-                total += income.salary.toDouble()
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.bottom_bar_menu, menu)
+        when (tabs.selectedTabPosition) {
+            0, 3 -> {
+                menu.findItem(R.id.action_sort).isVisible = false
+                menu.findItem(R.id.action_filter).isVisible = false
             }
-
-            val symbols = DecimalFormatSymbols()
-            symbols.groupingSeparator = '.'
-            symbols.decimalSeparator = ','
-            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
-
-            incomeView.incTotal?.text = "${getString(R.string.total_income)} ${moneyFormat.format(total)}"
         }
+        return super.onPrepareOptionsMenu(menu)
+    }
 
-        @SuppressLint("SetTextI18n")
-        private fun calculateExpensesTotal() {
-            var total = 0.0
-            for (expense in expensesList) {
-                total += expense.amount.toDouble()
-            }
+    private fun setupBottomBar() {
+        setSupportActionBar(bottomAppBar)
+        bottomAppBar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_logout -> {
+                    Toast.makeText(
+                        this, "Logging you out!",
+                        Toast.LENGTH_LONG
+                    ).show()
 
-            val symbols = DecimalFormatSymbols()
-            symbols.groupingSeparator = '.'
-            symbols.decimalSeparator = ','
-            val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+                    prefs.password = ""
+                    prefs.email = ""
+                    prefs.token = ""
 
-            expenseView.expTotal?.text = "${getString(R.string.total_expenses)} ${moneyFormat.format(total)}"
-        }
-
-        private fun sortIncome() {
-            when (incomeView.rgIncField?.checkedRadioButtonId) {
-                R.id.rbDate -> {
-                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                        R.id.rbAscending -> {
-                            incomeList.sortBy { it.date }
-                        }
-                        R.id.rbDescending -> {
-                            incomeList.sortByDescending { it.date }
-                        }
-                    }
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    true
                 }
 
-                R.id.rbSalary -> {
-                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                        R.id.rbAscending -> {
-                            incomeList.sortBy { it.salary.toDouble() }
-                        }
-                        R.id.rbDescending -> {
-                            incomeList.sortByDescending { it.salary.toDouble() }
-                        }
+                R.id.action_filter -> {
+                    when (tabs.selectedTabPosition) {
+                        1 -> IncomeFilterDialog(this, incomeFragment).show()
+                        2 -> IncomeFilterDialog(this, incomeFragment).show()
                     }
+                    true
                 }
 
-                R.id.rbComment -> {
-                    when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                        R.id.rbAscending -> {
-                            incomeList.sortBy { it.comment }
+                R.id.action_sort -> {
+                    when (tabs.selectedTabPosition) {
+                        1 -> {
+                            incomeFragment.crdSortIncome.visibility =
+                                if (incomeFragment.crdSortIncome.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                         }
-                        R.id.rbDescending -> {
-                            incomeList.sortByDescending { it.comment }
+                        2 -> {
+                            expensesFragment.crdSortExpenses.visibility =
+                                if (expensesFragment.crdSortExpenses.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                         }
                     }
+                    true
                 }
 
                 else -> {
+                    // If we got here, the user's action was not recognized.
+                    // Invoke the superclass to handle it.
+                    super.onOptionsItemSelected(it)
                 }
-            }
-            incomeView.rvIncome?.adapter?.notifyDataSetChanged()
-        }
-
-        private fun sortExpenses() {
-            when (expenseView.rgExpField?.checkedRadioButtonId) {
-                R.id.rbExpDate -> {
-                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
-                        R.id.rbExpAscending -> {
-                            expensesList.sortBy { it.date }
-                        }
-                        R.id.rbExpDescending -> {
-                            expensesList.sortByDescending { it.date }
-                        }
-                    }
-                }
-
-                R.id.rbAmount -> {
-                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
-                        R.id.rbExpAscending -> {
-                            expensesList.sortBy { it.amount.toDouble() }
-                        }
-                        R.id.rbExpDescending -> {
-                            expensesList.sortByDescending { it.amount.toDouble() }
-                        }
-                    }
-                }
-
-                R.id.rbCategory -> {
-                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
-                        R.id.rbExpAscending -> {
-                            expensesList.sortBy { it.category }
-                        }
-                        R.id.rbExpDescending -> {
-                            expensesList.sortByDescending { it.category }
-                        }
-                    }
-                }
-
-                R.id.rbExpComment -> {
-                    when (expenseView.rgExpDirection?.checkedRadioButtonId) {
-                        R.id.rbExpAscending -> {
-                            expensesList.sortBy { it.comment }
-                        }
-                        R.id.rbExpDescending -> {
-                            expensesList.sortByDescending { it.comment }
-                        }
-                    }
-                }
-
-                else -> {
-                }
-            }
-            expenseView.rvExpenses?.adapter?.notifyDataSetChanged()
-        }
-
-        private fun expenseItemClicked(expItem: Expense) {
-            val intent = Intent(expenseView.context, ExpenseDetails::class.java)
-            val bundle = Bundle()
-            bundle.putParcelable(EXPENSE_MESSAGE, expItem)
-            intent.putExtras(bundle)
-            activity?.startActivityForResult(intent, Operations.EXPENSE.code)
-        }
-
-        private fun categoryItemClicked(catItem: Category) {
-            val intent = Intent(categoryView.context, CategoryDetails::class.java)
-            val bundle = Bundle()
-            bundle.putParcelable(CATEGORY_MESSAGE, catItem)
-            intent.putExtras(bundle)
-            activity?.startActivityForResult(intent, Operations.CATEGORY.code)
-        }
-
-        private fun incomeItemClicked(incItem: Income) {
-            val intent = Intent(incomeView.context, IncomeDetails::class.java)
-            val bundle = Bundle()
-            bundle.putParcelable(INCOME_MESSAGE, incItem)
-            intent.putExtras(bundle)
-            activity?.startActivityForResult(intent, Operations.INCOME.code)
-        }
-
-        companion object {
-            /**
-             * The fragment argument representing the section number for this
-             * fragment.
-             */
-            private const val ARG_SECTION_NUMBER = "section_number"
-
-            /**
-             * Returns a new instance of this fragment for the given section
-             * number.
-             */
-            fun newInstance(sectionNumber: Int): PlaceholderFragment {
-                val fragment = PlaceholderFragment()
-                val args = Bundle()
-                args.putInt(ARG_SECTION_NUMBER, sectionNumber)
-                fragment.arguments = args
-                return fragment
             }
         }
     }
