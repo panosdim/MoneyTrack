@@ -43,9 +43,7 @@ class IncomeFilterDialog(
 
         btnCancel.setOnClickListener {
             this.hide()
-            println("^^^ " + filterDate.toString())
             if (filterDate == null) {
-                println("^^^ SET NULL")
                 selectedDateRange = null
             }
         }
@@ -69,6 +67,8 @@ class IncomeFilterDialog(
 
             filterIncome()
 
+            val activity = _context as MainActivity
+            activity.updateMenuIcons()
             listener.refreshView()
             this.hide()
         }
@@ -76,6 +76,9 @@ class IncomeFilterDialog(
         btnClearFilters.setOnClickListener {
             selectedDateRange = null
             clearFilters()
+
+            val activity = _context as MainActivity
+            activity.updateMenuIcons()
 
             val scope = CoroutineScope(Dispatchers.Main)
             scope.launch {
@@ -136,6 +139,13 @@ class IncomeFilterDialog(
             tvCommentFilter.setText(filterComment)
         } ?: kotlin.run {
             tvCommentFilter.setText("")
+        }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if (filterDate == null) {
+            selectedDateRange = null
         }
     }
 

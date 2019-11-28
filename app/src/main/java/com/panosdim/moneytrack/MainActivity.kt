@@ -1,11 +1,10 @@
 package com.panosdim.moneytrack
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
-import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.isVisible
 import com.google.android.material.tabs.TabLayout
 import com.panosdim.moneytrack.adapters.TabAdapter
 import com.panosdim.moneytrack.dialogs.CategoryDialog
@@ -16,6 +15,7 @@ import com.panosdim.moneytrack.fragments.CategoriesFragment
 import com.panosdim.moneytrack.fragments.DashboardFragment
 import com.panosdim.moneytrack.fragments.ExpensesFragment
 import com.panosdim.moneytrack.fragments.IncomeFragment
+import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
 import kotlinx.android.synthetic.main.fragment_income.*
@@ -26,12 +26,19 @@ class MainActivity : AppCompatActivity() {
     private val incomeFragment = IncomeFragment()
     private val expensesFragment = ExpensesFragment()
     private val categoriesFragment = CategoriesFragment()
+    private val params = CoordinatorLayout.LayoutParams(
+        CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+        CoordinatorLayout.LayoutParams.WRAP_CONTENT
+    )
+    private var margin: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         setupBottomBar()
+
+        margin = resources.getDimension(R.dimen.layout_margin).toInt()
 
         val adapter = TabAdapter(supportFragmentManager)
         adapter.addFragment(dashboardFragment, "Dashboard")
@@ -55,11 +62,19 @@ class MainActivity : AppCompatActivity() {
                 when (tab.position) {
                     0 -> {
                         addNew.hide()
+                        hideBottomAppBar()
+                    }
+                    3 -> {
+                        addNew.show()
+                        hideBottomAppBar()
                     }
                     else -> {
+                        invalidateOptionsMenu()
                         addNew.show()
+                        showBottomAppBar()
                     }
                 }
+
             }
         })
 
@@ -85,16 +100,19 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        addNew.hide()
+        bottomAppBar.isVisible = false
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.bottom_bar_menu, menu)
         when (tabs.selectedTabPosition) {
-            0, 3 -> {
-                menu.findItem(R.id.action_sort).isVisible = false
-                menu.findItem(R.id.action_filter).isVisible = false
-            }
+            1 -> toggleSortIconColor(incomeFragment.crdSortIncome.isVisible)
+            2 -> toggleSortIconColor(expensesFragment.crdSortExpenses.isVisible)
         }
+        updateMenuIcons()
+
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -102,23 +120,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(bottomAppBar)
         bottomAppBar.setOnMenuItemClickListener {
             when (it.itemId) {
-                R.id.action_logout -> {
-                    Toast.makeText(
-                        this, "Logging you out!",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    prefs.password = ""
-                    prefs.email = ""
-                    prefs.token = ""
-
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    true
-                }
-
                 R.id.action_filter -> {
                     when (tabs.selectedTabPosition) {
                         1 -> IncomeFilterDialog(this, incomeFragment).show()
@@ -130,12 +131,14 @@ class MainActivity : AppCompatActivity() {
                 R.id.action_sort -> {
                     when (tabs.selectedTabPosition) {
                         1 -> {
-                            incomeFragment.crdSortIncome.visibility =
-                                if (incomeFragment.crdSortIncome.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                            incomeFragment.crdSortIncome.isVisible =
+                                !incomeFragment.crdSortIncome.isVisible
+                            toggleSortIconColor(incomeFragment.crdSortIncome.isVisible)
                         }
                         2 -> {
-                            expensesFragment.crdSortExpenses.visibility =
-                                if (expensesFragment.crdSortExpenses.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                            expensesFragment.crdSortExpenses.isVisible =
+                                !expensesFragment.crdSortExpenses.isVisible
+                            toggleSortIconColor(expensesFragment.crdSortExpenses.isVisible)
                         }
                     }
                     true
@@ -147,6 +150,44 @@ class MainActivity : AppCompatActivity() {
                     super.onOptionsItemSelected(it)
                 }
             }
+        }
+    }
+
+    private fun hideBottomAppBar() {
+        bottomAppBar.isVisible = false
+        params.setMargins(
+            0,
+            margin, 0, 0
+        )
+        viewPager.layoutParams = params
+    }
+
+    private fun showBottomAppBar() {
+        params.setMargins(
+            0,
+            margin,
+            0,
+            margin
+        )
+        viewPager.layoutParams = params
+        bottomAppBar.isVisible = true
+    }
+
+    private fun toggleSortIconColor(visibility: Boolean) {
+        bottomAppBar.menu.findItem(R.id.action_sort).icon = if (visibility) {
+            getDrawable(R.drawable.ic_sort_by_alpha_blue_a700_24dp)
+        } else {
+            getDrawable(R.drawable.ic_sort_by_alpha_white_24dp)
+        }
+    }
+
+    fun updateMenuIcons() {
+        if (isFiltersSet) {
+            bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                getDrawable(R.drawable.ic_filter_list_blue_a700_24dp)
+        } else {
+            bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                getDrawable(R.drawable.ic_filter_list_white_24dp)
         }
     }
 }

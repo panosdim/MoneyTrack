@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@color/colorAccent"
         android:src="@drawable/ic_add_white_24dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:backgroundTint="@color/colorPrimary"
         app:fabSize="normal"
         app:layout_anchor="@id/bottomAppBar" />
@@ -67,8 +67,8 @@
         android:id="@+id/viewPager"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:layout_marginBottom="48dp"
+        android:layout_marginTop="@dimen/layout_margin"
+        android:layout_marginBottom="@dimen/layout_margin"
         android:visibility="visible"
         app:layout_anchorGravity="start|top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
