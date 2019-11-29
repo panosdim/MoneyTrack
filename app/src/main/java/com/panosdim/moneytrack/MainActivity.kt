@@ -7,10 +7,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.isVisible
 import com.google.android.material.tabs.TabLayout
 import com.panosdim.moneytrack.adapters.TabAdapter
-import com.panosdim.moneytrack.dialogs.CategoryDialog
-import com.panosdim.moneytrack.dialogs.ExpenseDialog
-import com.panosdim.moneytrack.dialogs.IncomeDialog
-import com.panosdim.moneytrack.dialogs.IncomeFilterDialog
+import com.panosdim.moneytrack.dialogs.*
 import com.panosdim.moneytrack.fragments.CategoriesFragment
 import com.panosdim.moneytrack.fragments.DashboardFragment
 import com.panosdim.moneytrack.fragments.ExpensesFragment
@@ -123,7 +120,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.action_filter -> {
                     when (tabs.selectedTabPosition) {
                         1 -> IncomeFilterDialog(this, incomeFragment).show()
-                        2 -> IncomeFilterDialog(this, incomeFragment).show()
+                        2 -> ExpensesFilterDialog(this, incomeFragment).show()
                     }
                     true
                 }
