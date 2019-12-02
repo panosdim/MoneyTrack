@@ -9,13 +9,13 @@ import android.view.WindowManager
 import androidx.core.view.isVisible
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.panosdim.moneytrack.*
-import com.panosdim.moneytrack.model.IncomeFilters.clearFilters
-import com.panosdim.moneytrack.model.IncomeFilters.filterComment
-import com.panosdim.moneytrack.model.IncomeFilters.filterDate
-import com.panosdim.moneytrack.model.IncomeFilters.filterIncome
-import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
+import com.panosdim.moneytrack.model.ExpensesFilters.clearFilters
+import com.panosdim.moneytrack.model.ExpensesFilters.filterCategory
+import com.panosdim.moneytrack.model.ExpensesFilters.filterComment
+import com.panosdim.moneytrack.model.ExpensesFilters.filterDate
+import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
+import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.multiselection.Item
 import com.panosdim.moneytrack.multiselection.MultiSelectionSpinner
 import kotlinx.android.synthetic.main.dialog_filter_expenses.*
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +42,9 @@ class ExpensesFilterDialog(
         windowProps?.width = WindowManager.LayoutParams.MATCH_PARENT
         window?.attributes = windowProps
         this.setCanceledOnTouchOutside(false)
+        
+        val mySpinner = tvCategoriesFilter as MultiSelectionSpinner
+        mySpinner.items = categoriesList
 
         btnCancel.setOnClickListener {
             this.hide()
@@ -67,7 +70,13 @@ class ExpensesFilterDialog(
                 filterDate = null
             }
 
-            filterIncome()
+            filterCategory = if (mySpinner.selectedItems.isEmpty()) {
+                null
+            } else {
+                mySpinner.selectedItems
+            }
+
+            filterExpenses()
 
             val activity = _context as MainActivity
             activity.updateMenuIcons()
@@ -85,11 +94,9 @@ class ExpensesFilterDialog(
             val scope = CoroutineScope(Dispatchers.Main)
             scope.launch {
                 try {
-                    val response = repository.getAllIncome()
-                    incomeList.clear()
-                    incomeList.addAll(response.data)
-                    selectedDateRange = null
-                    clearFilters()
+                    val response = repository.getAllExpenses()
+                    expensesList.clear()
+                    expensesList.addAll(response.data)
                     listener.refreshView()
                     this@ExpensesFilterDialog.hide()
                 } catch (e: HttpException) {
@@ -129,14 +136,6 @@ class ExpensesFilterDialog(
             }
         }
 
-        val items: ArrayList<Item> = ArrayList()
-        categoriesList.forEach {
-            items.add(Item(it, false))
-        }
-
-        val mySpinner = tvCategoriesFilter as MultiSelectionSpinner
-        mySpinner.items = items
-
         btnClearFilters.isVisible = isFiltersSet
 
         filterDate?.let {
@@ -149,6 +148,11 @@ class ExpensesFilterDialog(
             tvCommentFilter.setText(filterComment)
         } ?: kotlin.run {
             tvCommentFilter.setText("")
+        }
+
+        println("^^^" + filterCategory)
+        filterCategory?.let {
+            mySpinner.setSelection(it)
         }
     }
 

@@ -12,7 +12,8 @@ import com.panosdim.moneytrack.fragments.CategoriesFragment
 import com.panosdim.moneytrack.fragments.DashboardFragment
 import com.panosdim.moneytrack.fragments.ExpensesFragment
 import com.panosdim.moneytrack.fragments.IncomeFragment
-import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
+import com.panosdim.moneytrack.model.ExpensesFilters
+import com.panosdim.moneytrack.model.IncomeFilters
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
 import kotlinx.android.synthetic.main.fragment_income.*
@@ -120,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.action_filter -> {
                     when (tabs.selectedTabPosition) {
                         1 -> IncomeFilterDialog(this, incomeFragment).show()
-                        2 -> ExpensesFilterDialog(this, incomeFragment).show()
+                        2 -> ExpensesFilterDialog(this, expensesFragment).show()
                     }
                     true
                 }
@@ -179,12 +180,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun updateMenuIcons() {
-        if (isFiltersSet) {
-            bottomAppBar.menu.findItem(R.id.action_filter).icon =
-                getDrawable(R.drawable.ic_filter_list_blue_a700_24dp)
-        } else {
-            bottomAppBar.menu.findItem(R.id.action_filter).icon =
-                getDrawable(R.drawable.ic_filter_list_white_24dp)
+        when (tabs.selectedTabPosition) {
+            1 -> {
+                if (IncomeFilters.isFiltersSet) {
+                    bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                        getDrawable(R.drawable.ic_filter_list_blue_a700_24dp)
+                } else {
+                    bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                        getDrawable(R.drawable.ic_filter_list_white_24dp)
+                }
+            }
+            2 -> {
+                if (ExpensesFilters.isFiltersSet) {
+                    bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                        getDrawable(R.drawable.ic_filter_list_blue_a700_24dp)
+                } else {
+                    bottomAppBar.menu.findItem(R.id.action_filter).icon =
+                        getDrawable(R.drawable.ic_filter_list_white_24dp)
+                }
+            }
         }
+
     }
 }

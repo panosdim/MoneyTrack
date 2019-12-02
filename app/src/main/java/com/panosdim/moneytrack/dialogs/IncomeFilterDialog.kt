@@ -86,8 +86,6 @@ class IncomeFilterDialog(
                     val response = repository.getAllIncome()
                     incomeList.clear()
                     incomeList.addAll(response.data)
-                    selectedDateRange = null
-                    clearFilters()
                     listener.refreshView()
                     this@IncomeFilterDialog.hide()
                 } catch (e: HttpException) {
