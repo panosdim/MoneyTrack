@@ -13,6 +13,8 @@ import com.panosdim.moneytrack.DecimalDigitsInputFilter
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.model.Income
+import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
+import com.panosdim.moneytrack.model.IncomeFilters.unfilteredIncomeList
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.rest.requests.IncomeRequest
@@ -51,6 +53,25 @@ class IncomeDialog(
         // Set decimal filter to amount
         tvAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
 
+        setupListeners()
+
+        income?.let {
+            tvTitle.text = _context.getString(R.string.edit_income)
+            dateSelected = try {
+                LocalDate.parse(it.date)
+            } catch (ex: DateTimeParseException) {
+                LocalDate.now()
+            }
+            tvDate.setText(dateSelected.format(dateFormatter))
+            tvAmount.setText(it.amount.toString())
+            tvComment.setText(it.comment)
+        } ?: kotlin.run {
+            btnDelete.visibility = View.GONE
+            tvDate.setText(dateSelected.format(dateFormatter))
+        }
+    }
+
+    private fun setupListeners() {
         btnCancel.setOnClickListener {
             this.hide()
         }
@@ -70,6 +91,9 @@ class IncomeDialog(
                         when (response.code()) {
                             204 -> {
                                 incomeList.remove(it)
+                                if (isFiltersSet) {
+                                    unfilteredIncomeList.remove(it)
+                                }
                                 listener.refreshView()
                                 this@IncomeDialog.hide()
                             }
@@ -127,21 +151,6 @@ class IncomeDialog(
                 }, cYear, cMonth, cDay
             )
             datePickerDialog.show()
-        }
-
-        income?.let {
-            tvTitle.text = _context.getString(R.string.edit_income)
-            dateSelected = try {
-                LocalDate.parse(it.date)
-            } catch (ex: DateTimeParseException) {
-                LocalDate.now()
-            }
-            tvDate.setText(dateSelected.format(dateFormatter))
-            tvAmount.setText(it.amount.toString())
-            tvComment.setText(it.comment)
-        } ?: kotlin.run {
-            btnDelete.visibility = View.GONE
-            tvDate.setText(dateSelected.format(dateFormatter))
         }
     }
 
@@ -201,8 +210,13 @@ class IncomeDialog(
             scope.launch {
                 try {
                     val response = repository.updateIncome(it.id!!, data)
-                    val index = incomeList.indexOfFirst { (id) -> id == response.data.id }
+                    var index = incomeList.indexOfFirst { (id) -> id == response.data.id }
                     incomeList[index] = response.data
+                    if (isFiltersSet) {
+                        index =
+                            unfilteredIncomeList.indexOfFirst { (id) -> id == response.data.id }
+                        unfilteredIncomeList[index] = response.data
+                    }
                     listener.refreshView()
                     this@IncomeDialog.hide()
                 } catch (ex: HttpException) {
@@ -221,6 +235,9 @@ class IncomeDialog(
                 try {
                     val response = repository.createNewIncome(data)
                     incomeList.add(response.data)
+                    if (isFiltersSet) {
+                        unfilteredIncomeList.add(response.data)
+                    }
                     listener.refreshView()
                     this@IncomeDialog.hide()
                 } catch (ex: HttpException) {

@@ -16,6 +16,8 @@ import com.panosdim.moneytrack.adapters.ExpensesAdapter
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
 import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.model.Expense
+import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
+import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
@@ -73,6 +75,9 @@ class ExpensesFragment : Fragment(), RefreshView {
                 val response = repository.getAllExpenses()
                 expensesList.clear()
                 expensesList.addAll(response.data)
+                if (isFiltersSet) {
+                    filterExpenses()
+                }
                 sortExpenses()
             } catch (e: HttpException) {
                 val intent = Intent(activity, LoginActivity::class.java)
@@ -133,6 +138,9 @@ class ExpensesFragment : Fragment(), RefreshView {
     }
 
     override fun refreshView() {
+        if (isFiltersSet) {
+            filterExpenses()
+        }
         sortExpenses()
     }
 }

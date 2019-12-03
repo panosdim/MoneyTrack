@@ -42,7 +42,7 @@ class ExpensesFilterDialog(
         windowProps?.width = WindowManager.LayoutParams.MATCH_PARENT
         window?.attributes = windowProps
         this.setCanceledOnTouchOutside(false)
-        
+
         val mySpinner = tvCategoriesFilter as MultiSelectionSpinner
         mySpinner.items = categoriesList
 
@@ -150,7 +150,6 @@ class ExpensesFilterDialog(
             tvCommentFilter.setText("")
         }
 
-        println("^^^" + filterCategory)
         filterCategory?.let {
             mySpinner.setSelection(it)
         }

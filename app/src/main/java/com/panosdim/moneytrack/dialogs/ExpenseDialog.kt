@@ -13,6 +13,8 @@ import android.widget.Toast
 import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.model.Category
 import com.panosdim.moneytrack.model.Expense
+import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
+import com.panosdim.moneytrack.model.ExpensesFilters.unfilteredExpensesList
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.rest.requests.ExpenseRequest
 import kotlinx.android.synthetic.main.dialog_expense.*
@@ -58,6 +60,29 @@ class ExpenseDialog(
         )
         spCategory.adapter = spinnerData
 
+        setupListeners()
+
+        expense?.let {
+            tvTitle.text = _context.getString(R.string.edit_expense)
+            dateSelected = try {
+                LocalDate.parse(it.date)
+            } catch (ex: DateTimeParseException) {
+                LocalDate.now()
+            }
+            tvDate.setText(dateSelected.format(dateFormatter))
+            tvAmount.setText(it.amount.toString())
+            tvComment.setText(it.comment)
+            val selectedItem = spinnerData.getPosition(categoriesList.find { (id) ->
+                id == it.category
+            })
+            spCategory.setSelection(selectedItem)
+        } ?: kotlin.run {
+            btnDelete.visibility = View.GONE
+            tvDate.setText(dateSelected.format(dateFormatter))
+        }
+    }
+
+    private fun setupListeners() {
         btnCancel.setOnClickListener {
             this.hide()
         }
@@ -76,6 +101,9 @@ class ExpenseDialog(
                         when (response.code()) {
                             204 -> {
                                 expensesList.remove(it)
+                                if (isFiltersSet) {
+                                    unfilteredExpensesList.remove(it)
+                                }
                                 listener.refreshView()
                                 this@ExpenseDialog.hide()
                             }
@@ -133,25 +161,6 @@ class ExpenseDialog(
                 }, cYear, cMonth, cDay
             )
             datePickerDialog.show()
-        }
-
-        expense?.let {
-            tvTitle.text = _context.getString(R.string.edit_expense)
-            dateSelected = try {
-                LocalDate.parse(it.date)
-            } catch (ex: DateTimeParseException) {
-                LocalDate.now()
-            }
-            tvDate.setText(dateSelected.format(dateFormatter))
-            tvAmount.setText(it.amount.toString())
-            tvComment.setText(it.comment)
-            val selectedItem = spinnerData.getPosition(categoriesList.find { (id) ->
-                id == it.category
-            })
-            spCategory.setSelection(selectedItem)
-        } ?: kotlin.run {
-            btnDelete.visibility = View.GONE
-            tvDate.setText(dateSelected.format(dateFormatter))
         }
     }
 
@@ -213,8 +222,13 @@ class ExpenseDialog(
             scope.launch {
                 try {
                     val response = repository.updateExpense(it.id!!, data)
-                    val index = expensesList.indexOfFirst { (id) -> id == response.data.id }
+                    var index = expensesList.indexOfFirst { (id) -> id == response.data.id }
                     expensesList[index] = response.data
+                    if (isFiltersSet) {
+                        index =
+                            unfilteredExpensesList.indexOfFirst { (id) -> id == response.data.id }
+                        unfilteredExpensesList[index] = response.data
+                    }
                     listener.refreshView()
                     this@ExpenseDialog.hide()
                 } catch (ex: HttpException) {
@@ -233,6 +247,9 @@ class ExpenseDialog(
                 try {
                     val response = repository.createNewExpense(data)
                     expensesList.add(response.data)
+                    if (isFiltersSet) {
+                        unfilteredExpensesList.add(response.data)
+                    }
                     listener.refreshView()
                     this@ExpenseDialog.hide()
                 } catch (ex: HttpException) {

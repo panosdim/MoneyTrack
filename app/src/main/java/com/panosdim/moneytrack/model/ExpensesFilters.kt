@@ -21,24 +21,24 @@ object ExpensesFilters {
             setFilter()
         }
     var isFiltersSet = false
-    private var originalExpensesList = mutableListOf<Expense>()
+    var unfilteredExpensesList = mutableListOf<Expense>()
 
     init {
-        originalExpensesList.clear()
-        originalExpensesList.addAll(expensesList)
+        unfilteredExpensesList.clear()
+        unfilteredExpensesList.addAll(expensesList)
     }
 
     private fun setFilter() {
         val prevValue = isFiltersSet
         isFiltersSet = filterComment != null || filterDate != null || filterCategory != null
         if (!prevValue && isFiltersSet) {
-            originalExpensesList.clear()
-            originalExpensesList.addAll(expensesList)
+            unfilteredExpensesList.clear()
+            unfilteredExpensesList.addAll(expensesList)
         }
         if (prevValue && !isFiltersSet) {
             expensesList.clear()
-            expensesList.addAll(originalExpensesList)
-            originalExpensesList.clear()
+            expensesList.addAll(unfilteredExpensesList)
+            unfilteredExpensesList.clear()
         }
     }
 
@@ -52,7 +52,7 @@ object ExpensesFilters {
     fun filterExpenses() {
         if (isFiltersSet) {
             expensesList.clear()
-            expensesList.addAll(originalExpensesList)
+            expensesList.addAll(unfilteredExpensesList)
         }
 
         // Date Search

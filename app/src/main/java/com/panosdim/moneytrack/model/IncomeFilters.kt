@@ -16,24 +16,24 @@ object IncomeFilters {
             setFilter()
         }
     var isFiltersSet = false
-    private var originalIncomeList = mutableListOf<Income>()
+    var unfilteredIncomeList = mutableListOf<Income>()
 
     init {
-        originalIncomeList.clear()
-        originalIncomeList.addAll(incomeList)
+        unfilteredIncomeList.clear()
+        unfilteredIncomeList.addAll(incomeList)
     }
 
     private fun setFilter() {
         val prevValue = isFiltersSet
         isFiltersSet = filterComment != null || filterDate != null
         if (!prevValue && isFiltersSet) {
-            originalIncomeList.clear()
-            originalIncomeList.addAll(incomeList)
+            unfilteredIncomeList.clear()
+            unfilteredIncomeList.addAll(incomeList)
         }
         if (prevValue && !isFiltersSet) {
             incomeList.clear()
-            incomeList.addAll(originalIncomeList)
-            originalIncomeList.clear()
+            incomeList.addAll(unfilteredIncomeList)
+            unfilteredIncomeList.clear()
         }
     }
 
@@ -47,7 +47,7 @@ object IncomeFilters {
     fun filterIncome() {
         if (isFiltersSet) {
             incomeList.clear()
-            incomeList.addAll(originalIncomeList)
+            incomeList.addAll(unfilteredIncomeList)
         }
 
         // Date Search

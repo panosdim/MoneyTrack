@@ -29,6 +29,9 @@ import retrofit2.HttpException
 
 class IncomeFragment : Fragment(), RefreshView {
     override fun refreshView() {
+        if (isFiltersSet) {
+            filterIncome()
+        }
         sortIncome()
     }
 
