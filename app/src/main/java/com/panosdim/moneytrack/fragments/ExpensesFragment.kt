@@ -10,8 +10,8 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.panosdim.moneytrack.LoginActivity
 import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.activities.LoginActivity
 import com.panosdim.moneytrack.adapters.ExpensesAdapter
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
 import com.panosdim.moneytrack.expensesList

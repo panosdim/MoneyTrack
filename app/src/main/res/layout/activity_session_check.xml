@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    tools:context=".SessionCheckActivity">
+    tools:context=".activities.SessionCheckActivity">
 
     <TextView
         android:id="@+id/textView"

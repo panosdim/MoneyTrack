@@ -8,7 +8,11 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.core.view.isVisible
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.panosdim.moneytrack.*
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.activities.LoginActivity
+import com.panosdim.moneytrack.activities.MainActivity
+import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.model.ExpensesFilters.clearFilters
 import com.panosdim.moneytrack.model.ExpensesFilters.filterCategory
 import com.panosdim.moneytrack.model.ExpensesFilters.filterComment
@@ -16,7 +20,9 @@ import com.panosdim.moneytrack.model.ExpensesFilters.filterDate
 import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
 import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.multiselection.MultiSelectionSpinner
+import com.panosdim.moneytrack.repository
+import com.panosdim.moneytrack.utils.MultiSelectionSpinner
+import com.panosdim.moneytrack.utils.unaccent
 import kotlinx.android.synthetic.main.dialog_filter_expenses.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

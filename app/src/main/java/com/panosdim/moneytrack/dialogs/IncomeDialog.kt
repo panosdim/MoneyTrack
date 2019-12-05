@@ -9,7 +9,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
-import com.panosdim.moneytrack.DecimalDigitsInputFilter
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.model.Income
@@ -18,6 +17,7 @@ import com.panosdim.moneytrack.model.IncomeFilters.unfilteredIncomeList
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.rest.requests.IncomeRequest
+import com.panosdim.moneytrack.utils.DecimalDigitsInputFilter
 import kotlinx.android.synthetic.main.dialog_income.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +51,12 @@ class IncomeDialog(
         this.setCanceledOnTouchOutside(false)
 
         // Set decimal filter to amount
-        tvAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
+        tvAmount.filters = arrayOf<InputFilter>(
+            DecimalDigitsInputFilter(
+                5,
+                2
+            )
+        )
 
         setupListeners()
 

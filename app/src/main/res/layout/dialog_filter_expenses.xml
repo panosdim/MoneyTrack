@@ -56,7 +56,7 @@
         android:inputType="text"
         tools:ignore="TextFields" />
 
-    <com.panosdim.moneytrack.multiselection.MultiSelectionSpinner
+    <com.panosdim.moneytrack.utils.MultiSelectionSpinner
         android:id="@+id/tvCategoriesFilter"
         android:layout_width="fill_parent"
         android:layout_height="40dp"

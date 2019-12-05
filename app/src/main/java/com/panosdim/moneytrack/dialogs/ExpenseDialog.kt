@@ -10,13 +10,17 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import com.panosdim.moneytrack.*
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.model.Category
 import com.panosdim.moneytrack.model.Expense
 import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
 import com.panosdim.moneytrack.model.ExpensesFilters.unfilteredExpensesList
 import com.panosdim.moneytrack.model.RefreshView
+import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.rest.requests.ExpenseRequest
+import com.panosdim.moneytrack.utils.DecimalDigitsInputFilter
 import kotlinx.android.synthetic.main.dialog_expense.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +54,12 @@ class ExpenseDialog(
         this.setCanceledOnTouchOutside(false)
 
         // Set decimal filter to amount
-        tvAmount.filters = arrayOf<InputFilter>(DecimalDigitsInputFilter(5, 2))
+        tvAmount.filters = arrayOf<InputFilter>(
+            DecimalDigitsInputFilter(
+                5,
+                2
+            )
+        )
 
         // Initialize category spinner data
         val spinnerData = ArrayAdapter<Category>(

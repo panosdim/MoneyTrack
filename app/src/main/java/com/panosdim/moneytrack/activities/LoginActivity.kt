@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.activities
 
 import android.content.Intent
 import android.graphics.Color
@@ -11,7 +11,11 @@ import com.github.razir.progressbutton.attachTextChangeAnimator
 import com.github.razir.progressbutton.bindProgressButton
 import com.github.razir.progressbutton.hideProgress
 import com.github.razir.progressbutton.showProgress
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.prefs
+import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.rest.requests.LoginRequest
+import com.panosdim.moneytrack.utils.downloadData
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +82,8 @@ class LoginActivity : AppCompatActivity() {
             focusView!!.requestFocus()
         } else {
             btnLogin.showProgress {
-                buttonTextRes = R.string.checking_credentials
+                buttonTextRes =
+                    R.string.checking_credentials
                 progressColor = Color.WHITE
             }
             val scope = CoroutineScope(Dispatchers.Main)

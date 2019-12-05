@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack.multiselection
+package com.panosdim.moneytrack.utils
 
 import android.annotation.SuppressLint
 import android.content.Context

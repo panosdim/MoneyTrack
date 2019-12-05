@@ -1,4 +1,4 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.utils
 
 import android.text.InputFilter
 import android.text.Spanned

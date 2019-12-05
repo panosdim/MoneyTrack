@@ -1,7 +1,12 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.utils
 
 import android.content.Context
 import android.content.Intent
+import com.panosdim.moneytrack.App
+import com.panosdim.moneytrack.activities.LoginActivity
+import com.panosdim.moneytrack.categoriesList
+import com.panosdim.moneytrack.expensesList
+import com.panosdim.moneytrack.incomeList
 import retrofit2.HttpException
 import java.text.Normalizer
 

@@ -1,16 +1,11 @@
-package com.panosdim.moneytrack.fragments
-
+package com.panosdim.moneytrack.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.panosdim.moneytrack.LoginActivity
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.adapters.CategoryAdapter
 import com.panosdim.moneytrack.categoriesList
@@ -18,47 +13,57 @@ import com.panosdim.moneytrack.dialogs.CategoryDialog
 import com.panosdim.moneytrack.model.Category
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
-import kotlinx.android.synthetic.main.fragment_categories.view.*
+import kotlinx.android.synthetic.main.activity_categories.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
-class CategoriesFragment : Fragment(), RefreshView {
-    private lateinit var categoriesView: View
+
+class CategoriesActivity : AppCompatActivity(), RefreshView {
     private lateinit var categoryViewAdapter: RecyclerView.Adapter<*>
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        categoriesView = inflater.inflate(R.layout.fragment_categories, container, false)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_categories)
+
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp)
+        toolbar.title = getString(R.string.categories)
+        setSupportActionBar(toolbar)
+
+        toolbar.setNavigationOnClickListener {
+            finish()
+        }
+
         categoryViewAdapter =
             CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
 
-        val categoriesRV = categoriesView.rvCategories
-        categoriesRV.setHasFixedSize(true)
-        categoriesRV.layoutManager = LinearLayoutManager(categoriesView.context)
-        categoriesRV.addItemDecoration(
+        rvCategories.setHasFixedSize(true)
+        rvCategories.layoutManager = LinearLayoutManager(this)
+        rvCategories.addItemDecoration(
             DividerItemDecoration(
-                categoriesRV.context,
+                this,
                 DividerItemDecoration.VERTICAL
             )
         )
 
-        categoriesRV.adapter = categoryViewAdapter
+        rvCategories.adapter = categoryViewAdapter
 
-        return categoriesView
+        addNewCategory.setOnClickListener {
+            CategoryDialog(
+                this,
+                this
+            ).show()
+        }
     }
 
     private fun categoryItemClicked(catItem: Category) {
-        CategoryDialog(requireContext(), this, catItem).show()
+        CategoryDialog(this, this, catItem).show()
     }
 
     override fun refreshView() {
         categoriesList.sortByDescending { it.count }
-        categoriesView.rvCategories?.adapter?.notifyDataSetChanged()
+        rvCategories.adapter?.notifyDataSetChanged()
     }
 
     override fun onResume() {
@@ -71,12 +76,11 @@ class CategoriesFragment : Fragment(), RefreshView {
                 categoriesList.addAll(response.data)
                 categoriesList.sortByDescending { it.count }
             } catch (e: HttpException) {
-                val intent = Intent(activity, LoginActivity::class.java)
+                val intent = Intent(this@CategoriesActivity, LoginActivity::class.java)
                 intent.flags =
                     Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
             }
         }
     }
-
 }

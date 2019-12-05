@@ -1,9 +1,13 @@
-package com.panosdim.moneytrack
+package com.panosdim.moneytrack.activities
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.prefs
+import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.rest.requests.LoginRequest
+import com.panosdim.moneytrack.utils.downloadData
 import kotlinx.android.synthetic.main.activity_session_check.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +38,11 @@ class SessionCheckActivity : AppCompatActivity() {
                 try {
                     withContext(Dispatchers.IO) {
                         val response =
-                            repository.login(LoginRequest(prefs.email, prefs.password))
+                            repository.login(
+                                LoginRequest(
+                                    prefs.email, prefs.password
+                                )
+                            )
                         prefs.token = response.token
                     }
 

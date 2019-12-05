@@ -1,7 +1,7 @@
 package com.panosdim.moneytrack.model
 
 import com.panosdim.moneytrack.incomeList
-import com.panosdim.moneytrack.unaccent
+import com.panosdim.moneytrack.utils.unaccent
 import java.time.LocalDate
 
 object IncomeFilters {

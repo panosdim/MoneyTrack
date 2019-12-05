@@ -14,4 +14,9 @@
         android:icon="@drawable/ic_filter_list_white_24dp"
         android:title="@string/filter"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_categories"
+        android:icon="@drawable/ic_loyalty_white_24dp"
+        android:title="@string/categories"
+        app:showAsAction="ifRoom" />
 </menu>
