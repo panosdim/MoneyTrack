@@ -1,6 +1,7 @@
 package com.panosdim.moneytrack.rest
 
 import com.google.gson.GsonBuilder
+import com.panosdim.moneytrack.BACKEND_URL
 import com.panosdim.moneytrack.prefs
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -15,7 +16,7 @@ val webservice: Webservice by lazy {
         chain.proceed(newRequest)
     }.build()
     Retrofit.Builder()
-        .baseUrl("https://api.moneytrack.cc.nf/")
+        .baseUrl(BACKEND_URL)
         .client(client)
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
         .build().create(Webservice::class.java)

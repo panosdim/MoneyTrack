@@ -1,12 +1,14 @@
 package com.panosdim.moneytrack.activities
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.google.android.material.tabs.TabLayout
 import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.RC
 import com.panosdim.moneytrack.adapters.TabAdapter
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
 import com.panosdim.moneytrack.dialogs.ExpensesFilterDialog
@@ -16,9 +18,13 @@ import com.panosdim.moneytrack.fragments.ExpensesFragment
 import com.panosdim.moneytrack.fragments.IncomeFragment
 import com.panosdim.moneytrack.model.ExpensesFilters
 import com.panosdim.moneytrack.model.IncomeFilters
+import com.panosdim.moneytrack.utils.checkForNewVersion
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
 import kotlinx.android.synthetic.main.fragment_income.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
@@ -65,6 +71,31 @@ class MainActivity : AppCompatActivity() {
                         adapter.getItem(tabs.selectedTabPosition) as IncomeFragment
                     ).show()
                 }
+            }
+        }
+
+        val scope = CoroutineScope(Dispatchers.IO)
+
+        scope.launch() {
+            checkForNewVersion(this@MainActivity)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>, grantResults: IntArray
+    ) {
+        when (requestCode) {
+            RC.PERMISSION_REQUEST.code -> {
+                // If request is cancelled, the result arrays are empty.
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    val scope = CoroutineScope(Dispatchers.IO)
+
+                    scope.launch() {
+                        checkForNewVersion(this@MainActivity)
+                    }
+                }
+                return
             }
         }
     }

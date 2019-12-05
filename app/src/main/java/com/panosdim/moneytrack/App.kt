@@ -26,6 +26,12 @@ val expensesList: MutableList<Expense> by lazy {
     App.expenses
 }
 
+enum class RC(val code: Int) {
+    PERMISSION_REQUEST(0)
+}
+
+const val BACKEND_URL = "https://api.moneytrack.cc.nf/"
+
 class App : Application() {
     companion object {
         var prefs: Prefs? = null

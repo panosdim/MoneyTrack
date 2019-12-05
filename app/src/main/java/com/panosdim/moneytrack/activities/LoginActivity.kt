@@ -88,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
             }
             val scope = CoroutineScope(Dispatchers.Main)
 
-            scope.launch() {
+            scope.launch {
                 try {
                     withContext(Dispatchers.IO) {
                         val response = repository.login(LoginRequest(email, password))

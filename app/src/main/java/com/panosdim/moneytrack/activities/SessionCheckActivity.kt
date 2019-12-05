@@ -21,7 +21,6 @@ class SessionCheckActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_session_check)
 
-
         if (prefs.token.isEmpty()) {
             startIntent(LoginActivity::class.java)
         } else {
