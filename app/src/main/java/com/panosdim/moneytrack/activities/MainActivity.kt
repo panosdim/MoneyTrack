@@ -1,10 +1,17 @@
 package com.panosdim.moneytrack.activities
 
+import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.google.android.material.tabs.TabLayout
 import com.panosdim.moneytrack.R
@@ -19,6 +26,7 @@ import com.panosdim.moneytrack.fragments.IncomeFragment
 import com.panosdim.moneytrack.model.ExpensesFilters
 import com.panosdim.moneytrack.model.IncomeFilters
 import com.panosdim.moneytrack.utils.checkForNewVersion
+import com.panosdim.moneytrack.utils.refId
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
 import kotlinx.android.synthetic.main.fragment_income.*
@@ -30,6 +38,8 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
     private val incomeFragment = IncomeFragment()
     private val expensesFragment = ExpensesFragment()
+    private lateinit var manager: DownloadManager
+    private lateinit var onComplete: BroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,11 +84,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val scope = CoroutineScope(Dispatchers.IO)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                RC.PERMISSION_REQUEST.code
+            )
+        }
 
-        scope.launch() {
+        manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
             checkForNewVersion(this@MainActivity)
         }
+
+        onComplete = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val referenceId = intent!!.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                if (referenceId != -1L && referenceId == refId) {
+                    val apkUri = manager.getUriForDownloadedFile(refId)
+                    val installIntent = Intent(Intent.ACTION_VIEW)
+                    installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    installIntent.flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    startActivity(installIntent)
+                }
+
+            }
+        }
+
+        registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
     }
 
     override fun onRequestPermissionsResult(
@@ -183,6 +227,5 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
     }
 }

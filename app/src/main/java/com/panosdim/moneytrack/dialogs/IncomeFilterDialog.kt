@@ -2,14 +2,12 @@ package com.panosdim.moneytrack.dialogs
 
 import android.app.Dialog
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.core.view.isVisible
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.activities.LoginActivity
 import com.panosdim.moneytrack.activities.MainActivity
 import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.model.IncomeFilters.clearFilters
@@ -19,6 +17,7 @@ import com.panosdim.moneytrack.model.IncomeFilters.filterIncome
 import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
+import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import com.panosdim.moneytrack.utils.unaccent
 import kotlinx.android.synthetic.main.dialog_filter_income.*
 import kotlinx.coroutines.CoroutineScope
@@ -88,16 +87,9 @@ class IncomeFilterDialog(
             val scope = CoroutineScope(Dispatchers.Main)
             scope.launch {
                 try {
-                    val response = repository.getAllIncome()
-                    incomeList.clear()
-                    incomeList.addAll(response.data)
-                    listener.refreshView()
-                    this@IncomeFilterDialog.hide()
+                    downloadIncome()
                 } catch (e: HttpException) {
-                    val intent = Intent(_context, LoginActivity::class.java)
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    _context.startActivity(intent)
+                    loginWithStoredCredentials(_context, ::downloadIncome)
                 }
             }
             this.hide()
@@ -143,6 +135,14 @@ class IncomeFilterDialog(
         } ?: kotlin.run {
             tvCommentFilter.setText("")
         }
+    }
+
+    private suspend fun downloadIncome() {
+        val response = repository.getAllIncome()
+        incomeList.clear()
+        incomeList.addAll(response.data)
+        listener.refreshView()
+        this@IncomeFilterDialog.hide()
     }
 
     override fun onBackPressed() {

@@ -2,14 +2,12 @@ package com.panosdim.moneytrack.dialogs
 
 import android.app.Dialog
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.core.view.isVisible
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.activities.LoginActivity
 import com.panosdim.moneytrack.activities.MainActivity
 import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.expensesList
@@ -22,6 +20,7 @@ import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.utils.MultiSelectionSpinner
+import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import com.panosdim.moneytrack.utils.unaccent
 import kotlinx.android.synthetic.main.dialog_filter_expenses.*
 import kotlinx.coroutines.CoroutineScope
@@ -100,16 +99,9 @@ class ExpensesFilterDialog(
             val scope = CoroutineScope(Dispatchers.Main)
             scope.launch {
                 try {
-                    val response = repository.getAllExpenses()
-                    expensesList.clear()
-                    expensesList.addAll(response.data)
-                    listener.refreshView()
-                    this@ExpensesFilterDialog.hide()
+                    downloadExpenses()
                 } catch (e: HttpException) {
-                    val intent = Intent(_context, LoginActivity::class.java)
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    _context.startActivity(intent)
+                    loginWithStoredCredentials(_context, ::downloadExpenses)
                 }
             }
             this.hide()
@@ -159,6 +151,14 @@ class ExpensesFilterDialog(
         filterCategory?.let {
             mySpinner.setSelection(it)
         }
+    }
+
+    private suspend fun downloadExpenses() {
+        val response = repository.getAllExpenses()
+        expensesList.clear()
+        expensesList.addAll(response.data)
+        listener.refreshView()
+        this@ExpensesFilterDialog.hide()
     }
 
     override fun onBackPressed() {

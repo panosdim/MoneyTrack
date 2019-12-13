@@ -1,6 +1,5 @@
 package com.panosdim.moneytrack.activities
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -13,6 +12,7 @@ import com.panosdim.moneytrack.dialogs.CategoryDialog
 import com.panosdim.moneytrack.model.Category
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
+import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.activity_categories.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,20 +66,21 @@ class CategoriesActivity : AppCompatActivity(), RefreshView {
         rvCategories.adapter?.notifyDataSetChanged()
     }
 
+    private suspend fun downloadCategories() {
+        val response = repository.getAllCategories()
+        categoriesList.clear()
+        categoriesList.addAll(response.data)
+        categoriesList.sortByDescending { it.count }
+    }
+
     override fun onResume() {
         super.onResume()
         val scope = CoroutineScope(Dispatchers.Main)
         scope.launch {
             try {
-                val response = repository.getAllCategories()
-                categoriesList.clear()
-                categoriesList.addAll(response.data)
-                categoriesList.sortByDescending { it.count }
+                downloadCategories()
             } catch (e: HttpException) {
-                val intent = Intent(this@CategoriesActivity, LoginActivity::class.java)
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+                loginWithStoredCredentials(this@CategoriesActivity, ::downloadCategories)
             }
         }
     }

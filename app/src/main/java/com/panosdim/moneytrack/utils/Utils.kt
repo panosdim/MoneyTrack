@@ -1,20 +1,23 @@
 package com.panosdim.moneytrack.utils
 
 import android.Manifest
+import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Environment
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.activities.LoginActivity
-import com.panosdim.moneytrack.activities.MainActivity
+import com.panosdim.moneytrack.rest.requests.LoginRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import retrofit2.HttpException
 import java.io.BufferedReader
-import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.Normalizer
@@ -22,6 +25,7 @@ import javax.net.ssl.HttpsURLConnection
 
 
 val REGEX_UNACCENT = "\\p{InCombiningDiacriticalMarks}+".toRegex()
+var refId: Long = -1
 
 suspend fun downloadData(context: Context) {
     try {
@@ -70,31 +74,20 @@ fun checkForNewVersion(context: Context) {
         if (responseCode == HttpsURLConnection.HTTP_OK) {
             response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
             val version =
-                Version(JSONArray(response).getJSONObject(0).getJSONObject("apkData").getString("versionName"))
+                JSONArray(response).getJSONObject(0).getJSONObject("apkData").getLong("versionCode")
             val appVersion =
-                Version(context.packageManager.getPackageInfo(context.packageName, 0).versionName)
-            if (version.isGreater(appVersion)) {
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.READ_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    downloadNewVersion(context)
-                } else {
-                    ActivityCompat.requestPermissions(
-                        context as MainActivity,
-                        arrayOf(
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                        ),
-                        RC.PERMISSION_REQUEST.code
-                    )
-                }
+                context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
+            if (version > appVersion && ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                downloadNewVersion(context)
             }
-
         }
     } catch (e: Exception) {
         e.printStackTrace()
@@ -102,47 +95,45 @@ fun checkForNewVersion(context: Context) {
 }
 
 private fun downloadNewVersion(context: Context) {
-    val url: URL
-    try {
+    val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val request =
+        DownloadManager.Request(Uri.parse(BACKEND_URL + "apk/app-release.apk"))
+    request.setDescription("Downloading new version of MoneyTrack.")
+    request.setTitle("New MoneyTrack Version")
+    request.allowScanningByMediaScanner()
+    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Warehouse.apk")
+    refId = manager.enqueue(request)
+}
 
-        var destination =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).canonicalPath + "/"
-        val fileName = "Moneytrack.apk"
-        destination += fileName
+suspend fun loginWithStoredCredentials(context: Context, task: suspend () -> Unit) {
+    if (prefs.email.isNotEmpty() and prefs.password.isNotEmpty()) {
+        val scope = CoroutineScope(Dispatchers.Main)
 
-        //Delete update file if exists
-        val file = File(destination)
-        if (file.exists())
-            file.delete()
-
-        url = URL(BACKEND_URL + "apk/app-release.apk")
-
-        val conn = url.openConnection() as HttpURLConnection
-
-        conn.readTimeout = 15000
-        conn.connectTimeout = 15000
-        conn.requestMethod = "GET"
-
-        val responseCode = conn.responseCode
-
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            conn.inputStream.use { input ->
-                File(destination).outputStream().use { fileOut ->
-                    input.copyTo(fileOut)
+        scope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val response =
+                        repository.login(
+                            LoginRequest(
+                                prefs.email, prefs.password
+                            )
+                        )
+                    prefs.token = response.token
                 }
-            }
 
-            val downloads =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val apk = File(downloads, fileName)
-            val apkUri =
-                FileProvider.getUriForFile(context, context.packageName + ".fileprovider", apk)
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.setDataAndType(apkUri, "application/vnd.android.package-archive")
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.startActivity(intent)
+                task()
+            } catch (e: HttpException) {
+                val intent = Intent(context, LoginActivity::class.java)
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                context.startActivity(intent)
+            }
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } else {
+        val intent = Intent(context, LoginActivity::class.java)
+        intent.flags =
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        context.startActivity(intent)
     }
 }

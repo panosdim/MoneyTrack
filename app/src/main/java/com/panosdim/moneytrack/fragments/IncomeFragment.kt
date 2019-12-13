@@ -1,7 +1,6 @@
 package com.panosdim.moneytrack.fragments
 
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +10,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.activities.LoginActivity
 import com.panosdim.moneytrack.adapters.IncomeAdapter
 import com.panosdim.moneytrack.dialogs.IncomeDialog
 import com.panosdim.moneytrack.incomeList
@@ -20,6 +18,7 @@ import com.panosdim.moneytrack.model.IncomeFilters.filterIncome
 import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
 import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.repository
+import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.fragment_income.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,23 +111,24 @@ class IncomeFragment : Fragment(), RefreshView {
         incomeView.rvIncome?.adapter?.notifyDataSetChanged()
     }
 
+    private suspend fun downloadIncome() {
+        val response = repository.getAllIncome()
+        incomeList.clear()
+        incomeList.addAll(response.data)
+        if (isFiltersSet) {
+            filterIncome()
+        }
+        sortIncome()
+    }
+
     override fun onResume() {
         super.onResume()
         val scope = CoroutineScope(Dispatchers.Main)
         scope.launch {
             try {
-                val response = repository.getAllIncome()
-                incomeList.clear()
-                incomeList.addAll(response.data)
-                if (isFiltersSet) {
-                    filterIncome()
-                }
-                sortIncome()
+                downloadIncome()
             } catch (e: HttpException) {
-                val intent = Intent(activity, LoginActivity::class.java)
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+                loginWithStoredCredentials(requireContext(), ::downloadIncome)
             }
         }
     }
