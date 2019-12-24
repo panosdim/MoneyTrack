@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     val scope = CoroutineScope(Dispatchers.IO)
 
-                    scope.launch() {
+                    scope.launch {
                         checkForNewVersion(this@MainActivity)
                     }
                 }
@@ -185,6 +185,12 @@ class MainActivity : AppCompatActivity() {
 
                 R.id.action_categories -> {
                     val intent = Intent(this, CategoriesActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+
+                R.id.action_dashboard -> {
+                    val intent = Intent(this, DashboardActivity::class.java)
                     startActivity(intent)
                     true
                 }

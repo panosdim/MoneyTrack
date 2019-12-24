@@ -41,4 +41,6 @@
     <string name="clear">Clear</string>
     <string name="set">Set</string>
     <string name="date_filter">From %1$s To %2$s</string>
+    <string name="savings_title">Year %1$s</string>
+    <string name="savings_overview">Savings Overview</string>
 </resources>
