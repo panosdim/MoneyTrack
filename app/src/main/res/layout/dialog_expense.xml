@@ -73,7 +73,7 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginBottom="@dimen/margin"
-        android:spinnerMode="dropdown" />
+        android:spinnerMode="dialog" />
 
     <EditText
         android:id="@+id/tvComment"
