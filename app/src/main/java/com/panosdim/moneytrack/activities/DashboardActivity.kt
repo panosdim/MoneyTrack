@@ -32,7 +32,7 @@ class DashboardActivity : AppCompatActivity(), OnChartValueSelectedListener {
     private val startOfMonth = today.withDayOfMonth(1)
     private val endOfMonth = today.withDayOfMonth(today.lengthOfMonth())
     private val startOfYear = today.withDayOfMonth(1).withMonth(1)
-    private val endOfYear = today.withDayOfMonth(31).withMonth(12)
+    private val endOfYear = today.withMonth(12).withDayOfMonth(31)
 
     init {
         val symbols = DecimalFormatSymbols()
