@@ -102,7 +102,7 @@ private fun downloadNewVersion(context: Context) {
     request.setTitle("New MoneyTrack Version")
     request.allowScanningByMediaScanner()
     request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Warehouse.apk")
+    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "MoneyTrack.apk")
     refId = manager.enqueue(request)
 }
 
