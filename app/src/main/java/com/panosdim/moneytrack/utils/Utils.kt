@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.PackageInfoCompat
 import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.activities.LoginActivity
 import com.panosdim.moneytrack.rest.requests.LoginRequest
@@ -75,8 +76,12 @@ fun checkForNewVersion(context: Context) {
             response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
             val version =
                 JSONArray(response).getJSONObject(0).getJSONObject("apkData").getLong("versionCode")
-            val appVersion =
-                context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
+            val appVersion = PackageInfoCompat.getLongVersionCode(
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    0
+                )
+            )
             if (version > appVersion && ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
