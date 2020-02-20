@@ -147,8 +147,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.bottom_bar_menu, menu)
         when (tabs.selectedTabPosition) {
-            0 -> toggleSortIconColor(expensesFragment.crdSortExpenses.isVisible)
-            1 -> toggleSortIconColor(incomeFragment.crdSortIncome.isVisible)
+            0 -> expensesFragment.crdSortExpenses?.let { toggleSortIconColor(it.isVisible) }
+            1 -> incomeFragment.crdSortIncome?.let { toggleSortIconColor(it.isVisible) }
         }
         updateMenuIcons()
 
