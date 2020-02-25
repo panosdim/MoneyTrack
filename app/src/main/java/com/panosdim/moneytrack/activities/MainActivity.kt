@@ -26,6 +26,7 @@ import com.panosdim.moneytrack.fragments.IncomeFragment
 import com.panosdim.moneytrack.model.ExpensesFilters
 import com.panosdim.moneytrack.model.IncomeFilters
 import com.panosdim.moneytrack.utils.checkForNewVersion
+import com.panosdim.moneytrack.utils.downloadData
 import com.panosdim.moneytrack.utils.refId
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
@@ -33,6 +34,7 @@ import kotlinx.android.synthetic.main.fragment_income.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity() {
@@ -40,12 +42,15 @@ class MainActivity : AppCompatActivity() {
     private val expensesFragment = ExpensesFragment()
     private lateinit var manager: DownloadManager
     private lateinit var onComplete: BroadcastReceiver
+    private var fromOnCreate = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         setupBottomBar()
+
+        fromOnCreate = true
 
         val adapter = TabAdapter(supportFragmentManager)
         adapter.addFragment(expensesFragment, "Expenses")
@@ -199,6 +204,20 @@ class MainActivity : AppCompatActivity() {
                     // If we got here, the user's action was not recognized.
                     // Invoke the superclass to handle it.
                     super.onOptionsItemSelected(it)
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (fromOnCreate) {
+            fromOnCreate = false
+        } else {
+            val scope = CoroutineScope(Dispatchers.Main)
+            scope.launch {
+                withContext(Dispatchers.IO) {
+                    downloadData(this@MainActivity)
                 }
             }
         }
