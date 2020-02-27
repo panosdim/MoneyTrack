@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +25,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 
 class IncomeFragment : Fragment(), RefreshView {
@@ -129,6 +132,16 @@ class IncomeFragment : Fragment(), RefreshView {
                 downloadIncome()
             } catch (e: HttpException) {
                 loginWithStoredCredentials(requireContext(), ::downloadIncome)
+            } catch (t: SocketTimeoutException) {
+                Toast.makeText(requireContext(), "Connection timeout", Toast.LENGTH_LONG)
+                    .show()
+            } catch (d: UnknownHostException) {
+                Toast.makeText(
+                    requireContext(),
+                    "Unable to resolve host",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
             }
         }
     }

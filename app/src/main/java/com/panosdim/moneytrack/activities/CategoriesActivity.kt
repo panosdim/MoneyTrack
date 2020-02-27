@@ -1,6 +1,7 @@
 package com.panosdim.moneytrack.activities
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 
 class CategoriesActivity : AppCompatActivity(), RefreshView {
@@ -81,6 +84,18 @@ class CategoriesActivity : AppCompatActivity(), RefreshView {
                 downloadCategories()
             } catch (e: HttpException) {
                 loginWithStoredCredentials(this@CategoriesActivity, ::downloadCategories)
+            } catch (t: SocketTimeoutException) {
+                Toast.makeText(this@CategoriesActivity, "Connection timeout", Toast.LENGTH_LONG)
+                    .show()
+                finish()
+            } catch (d: UnknownHostException) {
+                Toast.makeText(
+                    this@CategoriesActivity,
+                    "Unable to resolve host",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+                finish()
             }
         }
     }

@@ -5,6 +5,7 @@ import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.data.Entry
@@ -26,6 +27,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.time.LocalDate
@@ -79,6 +82,18 @@ class DashboardActivity : AppCompatActivity(), OnChartValueSelectedListener {
                 downloadAllData()
             } catch (e: HttpException) {
                 loginWithStoredCredentials(this@DashboardActivity, ::downloadAllData)
+            } catch (t: SocketTimeoutException) {
+                Toast.makeText(this@DashboardActivity, "Connection timeout", Toast.LENGTH_LONG)
+                    .show()
+                finish()
+            } catch (d: UnknownHostException) {
+                Toast.makeText(
+                    this@DashboardActivity,
+                    "Unable to resolve host",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+                finish()
             }
         }
     }

@@ -91,7 +91,9 @@ fun checkForNewVersion(context: Context) {
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                downloadNewVersion(context)
+                val versionName = JSONArray(response).getJSONObject(0).getJSONObject("apkData")
+                    .getString("versionName")
+                downloadNewVersion(context, versionName)
             }
         }
     } catch (e: Exception) {
@@ -99,14 +101,17 @@ fun checkForNewVersion(context: Context) {
     }
 }
 
-private fun downloadNewVersion(context: Context) {
+private fun downloadNewVersion(context: Context, version: String) {
     val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     val request =
         DownloadManager.Request(Uri.parse(BACKEND_URL + "apk/app-release.apk"))
     request.setDescription("Downloading new version of MoneyTrack.")
     request.setTitle("New MoneyTrack Version")
     request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "MoneyTrack.apk")
+    request.setDestinationInExternalPublicDir(
+        Environment.DIRECTORY_DOWNLOADS,
+        "MoneyTrack-${version}.apk"
+    )
     refId = manager.enqueue(request)
 }
 

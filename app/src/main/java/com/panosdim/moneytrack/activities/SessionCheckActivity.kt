@@ -2,6 +2,7 @@ package com.panosdim.moneytrack.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.prefs
@@ -14,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class SessionCheckActivity : AppCompatActivity() {
 
@@ -78,6 +81,18 @@ class SessionCheckActivity : AppCompatActivity() {
                 startIntent(MainActivity::class.java)
             } catch (e: HttpException) {
                 loginWithStoredCredentials()
+            } catch (t: SocketTimeoutException) {
+                Toast.makeText(this@SessionCheckActivity, "Connection timeout", Toast.LENGTH_LONG)
+                    .show()
+                finish()
+            } catch (d: UnknownHostException) {
+                Toast.makeText(
+                    this@SessionCheckActivity,
+                    "Unable to resolve host",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+                finish()
             }
         }
     }
