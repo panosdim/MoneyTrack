@@ -26,7 +26,6 @@ import com.panosdim.moneytrack.fragments.IncomeFragment
 import com.panosdim.moneytrack.model.ExpensesFilters
 import com.panosdim.moneytrack.model.IncomeFilters
 import com.panosdim.moneytrack.utils.checkForNewVersion
-import com.panosdim.moneytrack.utils.downloadData
 import com.panosdim.moneytrack.utils.refId
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_expenses.*
@@ -34,7 +33,6 @@ import kotlinx.android.synthetic.main.fragment_income.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity() {
@@ -42,52 +40,10 @@ class MainActivity : AppCompatActivity() {
     private val expensesFragment = ExpensesFragment()
     private lateinit var manager: DownloadManager
     private lateinit var onComplete: BroadcastReceiver
-    private var fromOnCreate = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        setupBottomBar()
-
-        fromOnCreate = true
-
-        val adapter = TabAdapter(supportFragmentManager)
-        adapter.addFragment(expensesFragment, "Expenses")
-        adapter.addFragment(incomeFragment, "Income")
-        viewPager.adapter = adapter
-
-        tabs.setupWithViewPager(viewPager)
-        tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabReselected(p0: TabLayout.Tab?) {
-                // Not needed
-            }
-
-            override fun onTabUnselected(p0: TabLayout.Tab?) {
-                // Not needed
-            }
-
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                invalidateOptionsMenu()
-            }
-        })
-
-        addNew.setOnClickListener {
-            when (tabs.selectedTabPosition) {
-                0 -> {
-                    ExpenseDialog(
-                        this,
-                        adapter.getItem(tabs.selectedTabPosition) as ExpensesFragment
-                    ).show()
-                }
-                1 -> {
-                    IncomeDialog(
-                        this,
-                        adapter.getItem(tabs.selectedTabPosition) as IncomeFragment
-                    ).show()
-                }
-            }
-        }
 
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -149,6 +105,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        setupBottomBar()
+
+        val adapter = TabAdapter(supportFragmentManager)
+        adapter.addFragment(expensesFragment, "Expenses")
+        adapter.addFragment(incomeFragment, "Income")
+        viewPager.adapter = adapter
+
+        tabs.setupWithViewPager(viewPager)
+        tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabReselected(p0: TabLayout.Tab?) {
+                // Not needed
+            }
+
+            override fun onTabUnselected(p0: TabLayout.Tab?) {
+                // Not needed
+            }
+
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                invalidateOptionsMenu()
+            }
+        })
+
+        addNew.setOnClickListener {
+            when (tabs.selectedTabPosition) {
+                0 -> {
+                    ExpenseDialog(
+                        this,
+                        adapter.getItem(tabs.selectedTabPosition) as ExpensesFragment
+                    ).show()
+                }
+                1 -> {
+                    IncomeDialog(
+                        this,
+                        adapter.getItem(tabs.selectedTabPosition) as IncomeFragment
+                    ).show()
+                }
+            }
+        }
+    }
+
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.bottom_bar_menu, menu)
         when (tabs.selectedTabPosition) {
@@ -204,20 +202,6 @@ class MainActivity : AppCompatActivity() {
                     // If we got here, the user's action was not recognized.
                     // Invoke the superclass to handle it.
                     super.onOptionsItemSelected(it)
-                }
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (fromOnCreate) {
-            fromOnCreate = false
-        } else {
-            val scope = CoroutineScope(Dispatchers.Main)
-            scope.launch {
-                withContext(Dispatchers.IO) {
-                    downloadData(this@MainActivity)
                 }
             }
         }

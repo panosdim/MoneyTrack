@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.mikephil.charting.data.Entry
@@ -18,7 +19,13 @@ import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.incomeList
+import com.panosdim.moneytrack.utils.downloadData
+import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.activity_dashboard.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.time.LocalDate
@@ -52,9 +59,28 @@ class DashboardActivity : AppCompatActivity(), OnChartValueSelectedListener {
         toolbar.setNavigationOnClickListener {
             finish()
         }
+    }
 
+    private suspend fun downloadAllData() {
+        layoutDashboard.visibility = View.GONE
+        prgDownloadData.visibility = View.VISIBLE
+        downloadData(this@DashboardActivity)
+        layoutDashboard.visibility = View.VISIBLE
+        prgDownloadData.visibility = View.GONE
         initializeSavings()
         initializeChart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val scope = CoroutineScope(Dispatchers.Main)
+        scope.launch {
+            try {
+                downloadAllData()
+            } catch (e: HttpException) {
+                loginWithStoredCredentials(this@DashboardActivity, ::downloadAllData)
+            }
+        }
     }
 
     private fun initializeSavings() {

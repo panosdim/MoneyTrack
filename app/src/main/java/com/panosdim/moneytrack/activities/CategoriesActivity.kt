@@ -70,7 +70,7 @@ class CategoriesActivity : AppCompatActivity(), RefreshView {
         val response = repository.getAllCategories()
         categoriesList.clear()
         categoriesList.addAll(response.data)
-        categoriesList.sortByDescending { it.count }
+        refreshView()
     }
 
     override fun onResume() {

@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.adapters.ExpensesAdapter
+import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
 import com.panosdim.moneytrack.expensesList
 import com.panosdim.moneytrack.model.Expense
@@ -58,7 +59,7 @@ class ExpensesFragment : Fragment(), RefreshView {
         }
 
         expensesRV.adapter = expenseViewAdapter
-
+        
         return expensesView
     }
 
@@ -66,7 +67,12 @@ class ExpensesFragment : Fragment(), RefreshView {
         ExpenseDialog(requireContext(), this, expItem).show()
     }
 
-    private suspend fun downloadExpenses() {
+    private suspend fun downloadExpensesAndCategories() {
+        val resp = repository.getAllCategories()
+        categoriesList.clear()
+        categoriesList.addAll(resp.data)
+        categoriesList.sortByDescending { it.count }
+
         val response = repository.getAllExpenses()
         expensesList.clear()
         expensesList.addAll(response.data)
@@ -81,9 +87,9 @@ class ExpensesFragment : Fragment(), RefreshView {
         val scope = CoroutineScope(Dispatchers.Main)
         scope.launch {
             try {
-                downloadExpenses()
+                downloadExpensesAndCategories()
             } catch (e: HttpException) {
-                loginWithStoredCredentials(requireContext(), ::downloadExpenses)
+                loginWithStoredCredentials(requireContext(), ::downloadExpensesAndCategories)
             }
         }
     }
