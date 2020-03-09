@@ -160,6 +160,8 @@ class ExpensesFragment : Fragment(), RefreshView {
         if (isFiltersSet) {
             filterExpenses()
         }
-        sortExpenses()
+        if (::expensesView.isInitialized) {
+            sortExpenses()
+        }
     }
 }

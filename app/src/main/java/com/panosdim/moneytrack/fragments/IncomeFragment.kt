@@ -121,7 +121,10 @@ class IncomeFragment : Fragment(), RefreshView {
         if (isFiltersSet) {
             filterIncome()
         }
-        sortIncome()
+
+        if (::incomeView.isInitialized) {
+            sortIncome()
+        }
     }
 
     override fun onResume() {
