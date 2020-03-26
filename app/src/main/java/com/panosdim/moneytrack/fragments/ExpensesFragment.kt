@@ -10,16 +10,12 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.adapters.ExpensesAdapter
-import com.panosdim.moneytrack.categoriesList
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
-import com.panosdim.moneytrack.expensesList
-import com.panosdim.moneytrack.model.Expense
+import com.panosdim.moneytrack.model.*
 import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
 import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
-import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -53,12 +49,24 @@ class ExpensesFragment : Fragment(), RefreshView {
             )
         )
 
-        expensesView.rgExpField.setOnCheckedChangeListener { _, _ ->
-            sortExpenses()
+        expensesView.rgExpField.setOnCheckedChangeListener { _, checkedRadioButtonId ->
+            when (checkedRadioButtonId) {
+                R.id.rbExpDate -> ExpensesSort.field = SortField.DATE
+                R.id.rbAmount -> ExpensesSort.field = SortField.AMOUNT
+                R.id.rbCategory -> ExpensesSort.field = SortField.CATEGORY
+                R.id.rbExpComment -> ExpensesSort.field = SortField.COMMENT
+            }
+            ExpensesSort.sort()
+            expenseViewAdapter.notifyDataSetChanged()
         }
 
-        expensesView.rgExpDirection.setOnCheckedChangeListener { _, _ ->
-            sortExpenses()
+        expensesView.rgExpDirection.setOnCheckedChangeListener { _, checkedRadioButtonId ->
+            when (checkedRadioButtonId) {
+                R.id.rbExpAscending -> ExpensesSort.direction = SortDirection.ASC
+                R.id.rbExpDescending -> ExpensesSort.direction = SortDirection.DESC
+            }
+            ExpensesSort.sort()
+            expenseViewAdapter.notifyDataSetChanged()
         }
 
         expensesRV.adapter = expenseViewAdapter
@@ -82,7 +90,10 @@ class ExpensesFragment : Fragment(), RefreshView {
         if (isFiltersSet) {
             filterExpenses()
         }
-        sortExpenses()
+        ExpensesSort.sort()
+        if (::expenseViewAdapter.isInitialized) {
+            expenseViewAdapter.notifyDataSetChanged()
+        }
     }
 
     override fun onResume() {
@@ -107,61 +118,13 @@ class ExpensesFragment : Fragment(), RefreshView {
         }
     }
 
-    private fun sortExpenses() {
-        when (expensesView.rgExpField?.checkedRadioButtonId) {
-            R.id.rbExpDate -> {
-                when (expensesView.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.date }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.date }
-                    }
-                }
-            }
-
-            R.id.rbAmount -> {
-                when (expensesView.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.amount.toDouble() }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.amount.toDouble() }
-                    }
-                }
-            }
-
-            R.id.rbCategory -> {
-                when (expensesView.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.category }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.category }
-                    }
-                }
-            }
-
-            R.id.rbExpComment -> {
-                when (expensesView.rgExpDirection?.checkedRadioButtonId) {
-                    R.id.rbExpAscending -> {
-                        expensesList.sortBy { it.comment }
-                    }
-                    R.id.rbExpDescending -> {
-                        expensesList.sortByDescending { it.comment }
-                    }
-                }
-            }
-        }
-        expensesView.rvExpenses?.adapter?.notifyDataSetChanged()
-    }
-
     override fun refreshView() {
         if (isFiltersSet) {
             filterExpenses()
         }
-        if (::expensesView.isInitialized) {
-            sortExpenses()
+        ExpensesSort.sort()
+        if (::expenseViewAdapter.isInitialized) {
+            expenseViewAdapter.notifyDataSetChanged()
         }
     }
 }

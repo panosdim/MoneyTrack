@@ -10,15 +10,14 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.panosdim.moneytrack.R
+import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.adapters.IncomeAdapter
 import com.panosdim.moneytrack.dialogs.IncomeDialog
-import com.panosdim.moneytrack.incomeList
 import com.panosdim.moneytrack.model.Income
 import com.panosdim.moneytrack.model.IncomeFilters.filterIncome
 import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
+import com.panosdim.moneytrack.model.IncomeSort
 import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.repository
 import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.fragment_income.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -30,13 +29,6 @@ import java.net.UnknownHostException
 
 
 class IncomeFragment : Fragment(), RefreshView {
-    override fun refreshView() {
-        if (isFiltersSet) {
-            filterIncome()
-        }
-        sortIncome()
-    }
-
     private lateinit var incomeView: View
     private lateinit var incomeViewAdapter: RecyclerView.Adapter<*>
 
@@ -59,12 +51,23 @@ class IncomeFragment : Fragment(), RefreshView {
             )
         )
 
-        incomeView.rgIncField.setOnCheckedChangeListener { _, _ ->
-            sortIncome()
+        incomeView.rgIncField.setOnCheckedChangeListener { _, checkedRadioButtonId ->
+            when (checkedRadioButtonId) {
+                R.id.rbDate -> IncomeSort.field = SortField.DATE
+                R.id.rbSalary -> IncomeSort.field = SortField.AMOUNT
+                R.id.rbComment -> IncomeSort.field = SortField.COMMENT
+            }
+            IncomeSort.sort()
+            incomeViewAdapter.notifyDataSetChanged()
         }
 
-        incomeView.rgIncDirection.setOnCheckedChangeListener { _, _ ->
-            sortIncome()
+        incomeView.rgIncDirection.setOnCheckedChangeListener { _, checkedRadioButtonId ->
+            when (checkedRadioButtonId) {
+                R.id.rbAscending -> IncomeSort.direction = SortDirection.ASC
+                R.id.rbDescending -> IncomeSort.direction = SortDirection.DESC
+            }
+            IncomeSort.sort()
+            incomeViewAdapter.notifyDataSetChanged()
         }
 
         incomeRV.adapter = incomeViewAdapter
@@ -76,44 +79,6 @@ class IncomeFragment : Fragment(), RefreshView {
         IncomeDialog(requireContext(), this, incItem).show()
     }
 
-    private fun sortIncome() {
-        when (incomeView.rgIncField?.checkedRadioButtonId) {
-            R.id.rbDate -> {
-                when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.date }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.date }
-                    }
-                }
-            }
-
-            R.id.rbSalary -> {
-                when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.amount }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.amount }
-                    }
-                }
-            }
-
-            R.id.rbComment -> {
-                when (incomeView.rgIncDirection?.checkedRadioButtonId) {
-                    R.id.rbAscending -> {
-                        incomeList.sortBy { it.comment }
-                    }
-                    R.id.rbDescending -> {
-                        incomeList.sortByDescending { it.comment }
-                    }
-                }
-            }
-        }
-        incomeView.rvIncome?.adapter?.notifyDataSetChanged()
-    }
-
     private suspend fun downloadIncome() {
         val response = repository.getAllIncome()
         incomeList.clear()
@@ -121,9 +86,9 @@ class IncomeFragment : Fragment(), RefreshView {
         if (isFiltersSet) {
             filterIncome()
         }
-
+        IncomeSort.sort()
         if (::incomeView.isInitialized) {
-            sortIncome()
+            incomeViewAdapter.notifyDataSetChanged()
         }
     }
 
@@ -146,6 +111,16 @@ class IncomeFragment : Fragment(), RefreshView {
                 )
                     .show()
             }
+        }
+    }
+
+    override fun refreshView() {
+        if (isFiltersSet) {
+            filterIncome()
+        }
+        IncomeSort.sort()
+        if (::incomeView.isInitialized) {
+            incomeViewAdapter.notifyDataSetChanged()
         }
     }
 }

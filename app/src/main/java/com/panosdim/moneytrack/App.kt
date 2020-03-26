@@ -30,6 +30,14 @@ enum class RC(val code: Int) {
     PERMISSION_REQUEST(0)
 }
 
+enum class SortField {
+    DATE, AMOUNT, CATEGORY, COMMENT
+}
+
+enum class SortDirection {
+    ASC, DESC
+}
+
 const val BACKEND_URL = "https://api.moneytrack.cc.nf/"
 
 class App : Application() {
