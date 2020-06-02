@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.BufferedReader
@@ -91,8 +90,7 @@ fun checkForNewVersion(context: Context) {
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                val versionName = JSONArray(response).getJSONObject(0).getJSONObject("apkData")
-                    .getString("versionName")
+                val versionName = JSONObject(response).getString("versionName")
                 downloadNewVersion(context, versionName)
             }
         }
