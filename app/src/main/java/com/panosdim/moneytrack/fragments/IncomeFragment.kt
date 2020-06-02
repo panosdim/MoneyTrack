@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.adapters.IncomeAdapter
 import com.panosdim.moneytrack.dialogs.IncomeDialog
@@ -30,7 +29,8 @@ import java.net.UnknownHostException
 
 class IncomeFragment : Fragment(), RefreshView {
     private lateinit var incomeView: View
-    private lateinit var incomeViewAdapter: RecyclerView.Adapter<*>
+    private val incomeViewAdapter =
+        IncomeAdapter(incomeList) { incItem: Income -> incomeItemClicked(incItem) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,8 +38,6 @@ class IncomeFragment : Fragment(), RefreshView {
     ): View? {
         // Inflate the layout for this fragment
         incomeView = inflater.inflate(R.layout.fragment_income, container, false)
-        incomeViewAdapter =
-            IncomeAdapter(incomeList) { incItem: Income -> incomeItemClicked(incItem) }
 
         val incomeRV = incomeView.rvIncome
         incomeRV.setHasFixedSize(true)
@@ -87,9 +85,7 @@ class IncomeFragment : Fragment(), RefreshView {
             filterIncome()
         }
         IncomeSort.sort()
-        if (::incomeView.isInitialized) {
-            incomeViewAdapter.notifyDataSetChanged()
-        }
+        incomeViewAdapter.notifyDataSetChanged()
     }
 
     override fun onResume() {
@@ -119,8 +115,6 @@ class IncomeFragment : Fragment(), RefreshView {
             filterIncome()
         }
         IncomeSort.sort()
-        if (::incomeView.isInitialized) {
-            incomeViewAdapter.notifyDataSetChanged()
-        }
+        incomeViewAdapter.notifyDataSetChanged()
     }
 }

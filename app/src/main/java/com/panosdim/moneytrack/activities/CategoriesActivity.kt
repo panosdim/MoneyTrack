@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.adapters.CategoryAdapter
 import com.panosdim.moneytrack.categoriesList
@@ -24,7 +23,8 @@ import java.net.UnknownHostException
 
 
 class CategoriesActivity : AppCompatActivity(), RefreshView {
-    private lateinit var categoryViewAdapter: RecyclerView.Adapter<*>
+    private var categoryViewAdapter =
+        CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +37,6 @@ class CategoriesActivity : AppCompatActivity(), RefreshView {
         toolbar.setNavigationOnClickListener {
             finish()
         }
-
-        categoryViewAdapter =
-            CategoryAdapter(categoriesList) { catItem: Category -> categoryItemClicked(catItem) }
 
         rvCategories.setHasFixedSize(true)
         rvCategories.layoutManager = LinearLayoutManager(this)
@@ -66,7 +63,7 @@ class CategoriesActivity : AppCompatActivity(), RefreshView {
 
     override fun refreshView() {
         categoriesList.sortByDescending { it.count }
-        rvCategories.adapter?.notifyDataSetChanged()
+        categoryViewAdapter.notifyDataSetChanged()
     }
 
     private suspend fun downloadCategories() {

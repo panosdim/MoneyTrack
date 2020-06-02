@@ -9,13 +9,14 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.panosdim.moneytrack.*
 import com.panosdim.moneytrack.adapters.ExpensesAdapter
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
-import com.panosdim.moneytrack.model.*
+import com.panosdim.moneytrack.model.Expense
 import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
 import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
+import com.panosdim.moneytrack.model.ExpensesSort
+import com.panosdim.moneytrack.model.RefreshView
 import com.panosdim.moneytrack.utils.loginWithStoredCredentials
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,8 @@ import java.net.UnknownHostException
 class ExpensesFragment : Fragment(), RefreshView {
 
     private lateinit var expensesView: View
-    private lateinit var expenseViewAdapter: RecyclerView.Adapter<*>
+    private val expenseViewAdapter =
+        ExpensesAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,8 +38,6 @@ class ExpensesFragment : Fragment(), RefreshView {
     ): View? {
         // Inflate the layout for this fragment
         expensesView = inflater.inflate(R.layout.fragment_expenses, container, false)
-        expenseViewAdapter =
-            ExpensesAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
 
         val expensesRV = expensesView.rvExpenses
         expensesRV.setHasFixedSize(true)
@@ -91,9 +91,7 @@ class ExpensesFragment : Fragment(), RefreshView {
             filterExpenses()
         }
         ExpensesSort.sort()
-        if (::expenseViewAdapter.isInitialized) {
-            expenseViewAdapter.notifyDataSetChanged()
-        }
+        expenseViewAdapter.notifyDataSetChanged()
     }
 
     override fun onResume() {
@@ -123,8 +121,6 @@ class ExpensesFragment : Fragment(), RefreshView {
             filterExpenses()
         }
         ExpensesSort.sort()
-        if (::expenseViewAdapter.isInitialized) {
-            expenseViewAdapter.notifyDataSetChanged()
-        }
+        expenseViewAdapter.notifyDataSetChanged()
     }
 }
