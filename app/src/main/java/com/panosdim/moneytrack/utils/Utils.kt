@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.BufferedReader
 import java.net.HttpURLConnection
@@ -74,8 +75,7 @@ fun checkForNewVersion(context: Context) {
 
         if (responseCode == HttpsURLConnection.HTTP_OK) {
             response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
-            val version =
-                JSONArray(response).getJSONObject(0).getJSONObject("apkData").getLong("versionCode")
+            val version = JSONObject(response).getLong("versionCode")
             val appVersion = PackageInfoCompat.getLongVersionCode(
                 context.packageManager.getPackageInfo(
                     context.packageName,
