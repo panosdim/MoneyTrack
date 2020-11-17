@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "225884553772",
+    "firebase_url": "https://moneytrack-ced3a.firebaseio.com",
+    "project_id": "moneytrack-ced3a",
+    "storage_bucket": "moneytrack-ced3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225884553772:android:652667cfaea4d7915e8789",
+        "android_client_info": {
+          "package_name": "com.panosdim.moneytrack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "225884553772-ma5rjp651fjm541baa4pftot1jijpchj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.panosdim.moneytrack",
+            "certificate_hash": "43098747436f5fe61762c5639f36503ffede69cb"
+          }
+        },
+        {
+          "client_id": "225884553772-hdkln6ods69slbi7fi7ekdq7in71dogq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbZRZ4ePOJTTL8qQg_KBMne3gM5AxiY84"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "225884553772-hdkln6ods69slbi7fi7ekdq7in71dogq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

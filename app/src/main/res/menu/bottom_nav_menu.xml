@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_expenses"
+        android:icon="@drawable/ic_payment_black_24dp"
+        android:title="@string/title_expenses" />
+
+    <item
+        android:id="@+id/navigation_income"
+        android:icon="@drawable/ic_account_balance_wallet_black_24dp"
+        android:title="@string/title_income" />
+
+    <item
+        android:id="@+id/navigation_categories"
+        android:icon="@drawable/ic_loyalty_black_24dp"
+        android:title="@string/title_categories" />
+
+    <item
+        android:id="@+id/navigation_dashboard"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="@string/title_dashboard" />
+
+</menu>

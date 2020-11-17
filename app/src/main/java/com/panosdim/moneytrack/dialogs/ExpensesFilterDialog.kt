@@ -1,174 +1,146 @@
 package com.panosdim.moneytrack.dialogs
 
-import android.app.Dialog
-import android.content.Context
 import android.os.Bundle
-import android.view.Gravity
-import android.view.WindowManager
-import androidx.core.view.isVisible
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.viewModels
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
+import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.activities.MainActivity
-import com.panosdim.moneytrack.categoriesList
-import com.panosdim.moneytrack.expensesList
-import com.panosdim.moneytrack.model.ExpensesFilters.clearFilters
-import com.panosdim.moneytrack.model.ExpensesFilters.filterCategory
-import com.panosdim.moneytrack.model.ExpensesFilters.filterComment
-import com.panosdim.moneytrack.model.ExpensesFilters.filterDate
-import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
-import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
-import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.repository
-import com.panosdim.moneytrack.utils.MultiSelectionSpinner
-import com.panosdim.moneytrack.utils.loginWithStoredCredentials
-import com.panosdim.moneytrack.utils.unaccent
-import kotlinx.android.synthetic.main.dialog_filter_expenses.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import com.panosdim.moneytrack.utils.fromEpochMilli
+import com.panosdim.moneytrack.utils.toEpochMilli
+import com.panosdim.moneytrack.utils.toShowDateFormat
+import com.panosdim.moneytrack.viewmodel.ExpensesViewModel
+import kotlinx.android.synthetic.main.dialog_expenses_filter.view.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.time.LocalDate
-import kotlin.Pair
-import androidx.core.util.Pair as APair
+import java.time.format.DateTimeFormatter
 
+class ExpensesFilterDialog : BottomSheetDialogFragment() {
+    private lateinit var dialogView: View
+    private val viewModel: ExpensesViewModel by viewModels(ownerProducer = { requireParentFragment() })
+    private var rangeDateSelected: androidx.core.util.Pair<Long, Long>? = null
+    private val rangeDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
-class ExpensesFilterDialog(
-    private var _context: Context,
-    private var listener: RefreshView
-) :
-    Dialog(_context) {
+    override fun onCreateView(
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ): View? {
+        dialogView = inflater.inflate(R.layout.dialog_expenses_filter, container, false)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.dialog_filter_expenses)
-        val windowProps = window?.attributes
-
-        windowProps?.gravity = Gravity.BOTTOM
-        windowProps?.width = WindowManager.LayoutParams.MATCH_PARENT
-        window?.attributes = windowProps
-        this.setCanceledOnTouchOutside(false)
-
-        val mySpinner = tvCategoriesFilter as MultiSelectionSpinner
-        mySpinner.items = categoriesList
-
-        btnCancel.setOnClickListener {
-            this.hide()
-            if (filterDate == null) {
-                selectedDateRange = null
-            }
+        dialogView.expensesFilterAmount.setLabelFormatter { value: Float ->
+            val symbols = DecimalFormatSymbols()
+            symbols.groupingSeparator = '.'
+            symbols.decimalSeparator = ','
+            val moneyFormat = DecimalFormat("#,##0 €", symbols)
+            moneyFormat.format(value)
         }
 
-        btnSetFilters.setOnClickListener {
-            filterComment = if (tvCommentFilter.text.isNullOrEmpty()) {
-                null
+        dialogView.setExpensesFilters.setOnClickListener {
+            viewModel.filterAmount = dialogView.expensesFilterAmount.values
+            viewModel.filterComment = dialogView.expensesFilterComment.text.toString()
+            rangeDateSelected?.let {
+                val startDate = fromEpochMilli(it.first!!)
+                val endDate = fromEpochMilli(it.second!!)
+                viewModel.filterDate = Pair(startDate, endDate)
+            }
+
+            if (dialogView.expensesFilterCategory.checkedChipIds.isNotEmpty()) {
+                viewModel.filterCategory = dialogView.expensesFilterCategory.checkedChipIds
             } else {
-                tvCommentFilter.text.toString().unaccent()
+                viewModel.filterCategory = null
             }
-
-            selectedDateRange?.let {
-                val startDate =
-                    LocalDate.ofEpochDay(it.first!! / (1000 * 60 * 60 * 24))
-                val endDate =
-                    LocalDate.ofEpochDay(it.second!! / (1000 * 60 * 60 * 24))
-                filterDate = Pair(startDate, endDate)
-            } ?: kotlin.run {
-                filterDate = null
-            }
-
-            filterCategory = if (mySpinner.selectedItems.isEmpty()) {
-                null
-            } else {
-                mySpinner.selectedItems
-            }
-
-            filterExpenses()
-
-            val activity = _context as MainActivity
-            activity.updateMenuIcons()
-            listener.refreshView()
-            this.hide()
+            
+            viewModel.refreshExpenses()
+            dismiss()
         }
 
-        btnClearFilters.setOnClickListener {
-            selectedDateRange = null
-            clearFilters()
+        dialogView.expensesFilterDate.setOnClickListener {
+            //Date Picker
+            val builder = MaterialDatePicker.Builder.dateRangePicker()
+            val constraintsBuilder = CalendarConstraints.Builder()
+            constraintsBuilder.setOpenAt(LocalDate.now().toEpochMilli())
+            builder.setCalendarConstraints(constraintsBuilder.build())
+            rangeDateSelected?.let {
+                builder.setSelection(rangeDateSelected)
+            }
+            builder.setTitleText("Select Range")
 
-            val activity = _context as MainActivity
-            activity.updateMenuIcons()
-
-            val scope = CoroutineScope(Dispatchers.Main)
-            scope.launch {
-                try {
-                    downloadExpenses()
-                } catch (e: HttpException) {
-                    loginWithStoredCredentials(_context, ::downloadExpenses)
+            val picker: MaterialDatePicker<androidx.core.util.Pair<Long, Long>> = builder.build()
+            picker.addOnPositiveButtonClickListener { selection ->
+                rangeDateSelected = selection
+                rangeDateSelected?.let {
+                    val startDate = fromEpochMilli(it.first!!).toShowDateFormat(rangeDateFormatter)
+                    val endDate = fromEpochMilli(it.second!!).toShowDateFormat(rangeDateFormatter)
+                    dialogView.expensesFilterDate.setText(requireContext().getString(R.string.date_filter, startDate, endDate))
                 }
             }
-            this.hide()
+
+            picker.show(childFragmentManager, picker.toString())
         }
 
-        tvDateFilter.setOnClickListener {
-            val builderRange = MaterialDatePicker.Builder.dateRangePicker()
-            val pickerRange = selectedDateRange?.let {
-                builderRange.setSelection(it)
-                builderRange.build()
-            } ?: kotlin.run {
-                builderRange.build()
-            }
-
-            val activity = _context as MainActivity
-            pickerRange.show(activity.supportFragmentManager, pickerRange.toString())
-
-            pickerRange.addOnPositiveButtonClickListener {
-                selectedDateRange = APair(it.first, it.second)
-                val startDate =
-                    LocalDate.ofEpochDay(it.first!! / (1000 * 60 * 60 * 24))
-                val endDate =
-                    LocalDate.ofEpochDay(it.second!! / (1000 * 60 * 60 * 24))
-                tvDateFilter.setText(_context.getString(R.string.date_filter, startDate, endDate))
-            }
-
-            pickerRange.addOnNegativeButtonClickListener {
-                selectedDateRange = null
-                tvDateFilter.setText("")
+        viewModel.expenses.value?.let { list ->
+            val min = list.minByOrNull { it.amount }
+            val max = list.maxByOrNull { it.amount }
+            if (min != null && max != null) {
+                dialogView.expensesFilterAmount.values = listOf(min.amount, max.amount)
             }
         }
 
-        btnClearFilters.isVisible = isFiltersSet
+        viewModel.categories.observe(viewLifecycleOwner) { list ->
+            list.sortedByDescending { it.count }.forEach { category ->
+                val chip = layoutInflater.inflate(R.layout.row_chip_view, requireView().parent.parent as ViewGroup, false) as Chip
+                chip.text = category.category
+                chip.id = category.id!!
+                viewModel.filterCategory?.let {
+                    chip.isChecked = it.contains(chip.id)
+                }
+                dialogView.expensesFilterCategory.addView(chip)
+            }
+        }
 
-        filterDate?.let {
-            tvDateFilter.setText(_context.getString(R.string.date_filter, it.first, it.second))
+        dialogView.clearExpensesFilters.setOnClickListener {
+            viewModel.clearFilters()
+            viewModel.expenses.value?.let { list ->
+                val min = list.minByOrNull { it.amount }
+                val max = list.maxByOrNull { it.amount }
+                dialogView.expensesFilterAmount.values = listOf(min?.amount, max?.amount)
+            }
+            dialogView.expensesFilterComment.setText("")
+            dialogView.expensesFilterDate.setText("")
+            rangeDateSelected = null
+
+            dismiss()
+        }
+
+        return dialogView
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        viewModel.filterAmount?.let {
+            dialogView.expensesFilterAmount.values = it
         } ?: kotlin.run {
-            tvDateFilter.setText("")
+            viewModel.expenses.value?.let { list ->
+                val min = list.minByOrNull { it.amount }
+                val max = list.maxByOrNull { it.amount }
+                dialogView.expensesFilterAmount.values = listOf(min?.amount, max?.amount)
+            }
         }
 
-        filterComment?.let {
-            tvCommentFilter.setText(filterComment)
+        viewModel.filterDate?.let {
+            val startDate = it.first.toShowDateFormat(rangeDateFormatter)
+            val endDate = it.second.toShowDateFormat(rangeDateFormatter)
+            dialogView.expensesFilterDate.setText(requireContext().getString(R.string.date_filter, startDate, endDate))
         } ?: kotlin.run {
-            tvCommentFilter.setText("")
+            rangeDateSelected = null
+            dialogView.expensesFilterDate.setText("")
         }
 
-        filterCategory?.let {
-            mySpinner.setSelection(it)
-        }
-    }
-
-    private suspend fun downloadExpenses() {
-        val response = repository.getAllExpenses()
-        expensesList.clear()
-        expensesList.addAll(response.data)
-        listener.refreshView()
-        this@ExpensesFilterDialog.hide()
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
-        if (filterDate == null) {
-            selectedDateRange = null
-        }
-    }
-
-    companion object {
-        var selectedDateRange: APair<Long, Long>? = null
     }
 }

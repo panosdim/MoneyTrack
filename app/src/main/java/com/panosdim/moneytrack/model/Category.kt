@@ -1,6 +1,15 @@
 package com.panosdim.moneytrack.model
 
-data class Category(var id: Int? = null, var category: String, var count: Int) {
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
+data class Category(
+    @PrimaryKey var id: Int? = null,
+    @ColumnInfo var category: String,
+    @ColumnInfo var count: Int
+) {
     override fun toString(): String {
         return category
     }

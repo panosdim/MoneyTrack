@@ -1,3 +1,13 @@
 package com.panosdim.moneytrack.model
 
-data class Income(var id: Int? = null, var date: String, var amount: Float, var comment: String)
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity
+data class Income(
+    @PrimaryKey var id: Int? = null,
+    @ColumnInfo var date: String,
+    @ColumnInfo var amount: Float,
+    @ColumnInfo var comment: String
+)

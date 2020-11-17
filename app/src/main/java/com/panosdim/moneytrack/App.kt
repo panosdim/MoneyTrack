@@ -1,56 +1,39 @@
 package com.panosdim.moneytrack
 
 import android.app.Application
-import com.panosdim.moneytrack.model.Category
-import com.panosdim.moneytrack.model.Expense
-import com.panosdim.moneytrack.model.Income
-import com.panosdim.moneytrack.rest.Repository
+import androidx.room.Room
+import com.panosdim.moneytrack.db.AppDatabase
 
 val prefs: Prefs by lazy {
     App.prefs!!
 }
 
-val repository: Repository by lazy {
-    App.repository
-}
-
-val categoriesList: MutableList<Category> by lazy {
-    App.categories
-}
-
-val incomeList: MutableList<Income> by lazy {
-    App.income
-}
-
-val expensesList: MutableList<Expense> by lazy {
-    App.expenses
+val db by lazy {
+    App.db
 }
 
 enum class RC(val code: Int) {
     PERMISSION_REQUEST(0)
 }
 
-enum class SortField {
-    DATE, AMOUNT, CATEGORY, COMMENT
-}
-
-enum class SortDirection {
-    ASC, DESC
-}
-
-const val BACKEND_URL = "https://api.moneytrack.cc.nf/"
+const val BACKEND_URL = "https://api.moneytrack.cc.nf/v2/"
 
 class App : Application() {
     companion object {
         var prefs: Prefs? = null
-        var repository = Repository()
-        var categories: MutableList<Category> = mutableListOf()
-        var expenses: MutableList<Expense> = mutableListOf()
-        var income: MutableList<Income> = mutableListOf()
+        lateinit var db: AppDatabase
+        lateinit var instance: App private set
     }
 
     override fun onCreate() {
         prefs = Prefs(applicationContext)
+        db = Room.databaseBuilder(
+                applicationContext,
+                AppDatabase::class.java, "moneytrack"
+        )
+                .fallbackToDestructiveMigration()
+                .build()
         super.onCreate()
+        instance = this
     }
 }

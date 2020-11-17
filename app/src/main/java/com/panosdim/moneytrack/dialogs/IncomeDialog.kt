@@ -1,260 +1,282 @@
 package com.panosdim.moneytrack.dialogs
 
-import android.app.DatePickerDialog
-import android.app.Dialog
-import android.content.Context
 import android.os.Bundle
 import android.text.InputFilter
-import android.view.Gravity
+import android.view.KeyEvent
+import android.view.LayoutInflater
 import android.view.View
-import android.view.WindowManager
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.fragment.app.viewModels
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.panosdim.moneytrack.R
-import com.panosdim.moneytrack.incomeList
+import com.panosdim.moneytrack.api.data.Resource
 import com.panosdim.moneytrack.model.Income
-import com.panosdim.moneytrack.model.IncomeFilters.isFiltersSet
-import com.panosdim.moneytrack.model.IncomeFilters.unfilteredIncomeList
-import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.repository
-import com.panosdim.moneytrack.rest.requests.IncomeRequest
-import com.panosdim.moneytrack.utils.DecimalDigitsInputFilter
-import kotlinx.android.synthetic.main.dialog_income.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import com.panosdim.moneytrack.utils.*
+import com.panosdim.moneytrack.viewmodel.IncomeViewModel
+import kotlinx.android.synthetic.main.dialog_income.view.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 
-class IncomeDialog(
-    private var _context: Context,
-    private var listener: RefreshView,
+class IncomeDialog : BottomSheetDialogFragment() {
+    private lateinit var dialogView: View
     private var income: Income? = null
-) :
-    Dialog(_context) {
+    private val textWatcher = generateTextWatcher(::validateForm)
+    private val viewModel: IncomeViewModel by viewModels(ownerProducer = { requireParentFragment() })
+    private val incomeDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+    private val sqlDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private var dateSelected: LocalDate = LocalDate.now()
 
-    private lateinit var datePickerDialog: DatePickerDialog
-    private var dateSelected = LocalDate.now()
-    private val dateFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-    private val scope = CoroutineScope(Dispatchers.Main)
+    override fun onCreateView(
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
+    ): View? {
+        dialogView = inflater.inflate(R.layout.dialog_income, container, false)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.dialog_income)
-        val windowProps = window?.attributes
-
-        windowProps?.gravity = Gravity.BOTTOM
-        windowProps?.width = WindowManager.LayoutParams.MATCH_PARENT
-        window?.attributes = windowProps
-        this.setCanceledOnTouchOutside(false)
-
-        // Set decimal filter to amount
-        tvAmount.filters = arrayOf<InputFilter>(
-            DecimalDigitsInputFilter(
-                5,
-                2
-            )
+        dialogView.incomeAmount.filters = arrayOf<InputFilter>(
+                DecimalDigitsInputFilter(
+                        5,
+                        2
+                )
         )
 
-        setupListeners()
-
-        income?.let {
-            tvTitle.text = _context.getString(R.string.edit_income)
-            dateSelected = try {
-                LocalDate.parse(it.date)
-            } catch (ex: DateTimeParseException) {
-                LocalDate.now()
+        dialogView.incomeComment.setOnEditorActionListener { _, actionId, event ->
+            if (isFormValid() && (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER || actionId == EditorInfo.IME_ACTION_DONE)) {
+                income?.let {
+                    updateIncome(it)
+                } ?: kotlin.run {
+                    saveIncome()
+                }
             }
-            tvDate.setText(dateSelected.format(dateFormatter))
-            tvAmount.setText(it.amount.toString())
-            tvComment.setText(it.comment)
-        } ?: kotlin.run {
-            btnDelete.visibility = View.GONE
-            tvDate.setText(dateSelected.format(dateFormatter))
+            false
         }
+
+        dialogView.incomeDate.setOnClickListener {
+            //Date Picker
+            val builder = MaterialDatePicker.Builder.datePicker()
+            val constraintsBuilder = CalendarConstraints.Builder()
+            constraintsBuilder.setOpenAt(dateSelected.toEpochMilli())
+            builder.setCalendarConstraints(constraintsBuilder.build())
+            builder.setSelection(dateSelected.toEpochMilli())
+            builder.setTitleText("Select Date")
+
+            val picker: MaterialDatePicker<Long> = builder.build()
+            picker.addOnPositiveButtonClickListener { selection ->
+                dateSelected = fromEpochMilli(selection)
+                dialogView.incomeDate.setText(dateSelected.toShowDateFormat(incomeDateFormatter))
+            }
+
+            picker.show(childFragmentManager, picker.toString())
+        }
+
+        dialogView.saveIncome.setOnClickListener {
+            dialogView.prgIndicator.visibility = View.VISIBLE
+            dialogView.saveIncome.isEnabled = false
+            dialogView.deleteIncome.isEnabled = false
+
+            income?.let {
+                updateIncome(it)
+            } ?: kotlin.run {
+                saveIncome()
+            }
+        }
+
+        dialogView.deleteIncome.setOnClickListener {
+            deleteIncome()
+        }
+
+        return dialogView
     }
 
-    private fun setupListeners() {
-        btnCancel.setOnClickListener {
-            this.hide()
-        }
+    override fun onPause() {
+        super.onPause()
+        dateSelected = LocalDate.now()
+    }
 
-        btnSave.setOnClickListener {
-            validateInputs()
-        }
+    private fun updateIncome(income: Income) {
+        // Check if we change something in the object
+        if (income.date == dateSelected.format(sqlDateFormatter) &&
+                income.amount == dialogView.incomeAmount.text.toString().toFloat() &&
+                income.comment == dialogView.incomeComment.text.toString()
+        ) {
+            dismiss()
+        } else {
+            // Update Income
+            income.date = dateSelected.format(sqlDateFormatter)
+            income.amount = dialogView.incomeAmount.text.toString().toFloat()
+            income.comment = dialogView.incomeComment.text.toString()
 
-        btnDelete.setOnClickListener {
-            this.hide()
-            income?.let {
-                scope.launch {
-                    prgIndicator.visibility = View.VISIBLE
-                    btnDelete.isEnabled = false
-                    try {
-                        val response = repository.deleteIncome(it.id!!)
-                        when (response.code()) {
-                            204 -> {
-                                incomeList.remove(it)
-                                if (isFiltersSet) {
-                                    unfilteredIncomeList.remove(it)
-                                }
-                                listener.refreshView()
-                                this@IncomeDialog.hide()
-                            }
-                            404 -> {
-                                Toast.makeText(
-                                    _context,
-                                    "Error deleting income. Income not found.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                prgIndicator.visibility = View.GONE
-                                btnDelete.isEnabled = true
-                            }
-                            403 -> {
-                                Toast.makeText(
-                                    _context,
-                                    "Error deleting income. Income not belong to you.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                prgIndicator.visibility = View.GONE
-                                btnDelete.isEnabled = true
-                            }
+            viewModel.updateIncome(income).observe(viewLifecycleOwner) { resource ->
+                if (resource != null) {
+                    when (resource) {
+                        is Resource.Success -> {
+                            dismiss()
+                            dialogView.prgIndicator.visibility = View.GONE
+                            dialogView.deleteIncome.isEnabled = true
+                            dialogView.saveIncome.isEnabled = true
                         }
-                    } catch (ex: HttpException) {
-                        Toast.makeText(
-                            _context,
-                            "Error deleting income.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        prgIndicator.visibility = View.GONE
-                        btnDelete.isEnabled = true
+                        is Resource.Error -> {
+                            Toast.makeText(
+                                    requireContext(),
+                                    resource.message,
+                                    Toast.LENGTH_LONG
+                            ).show()
+                            dialogView.prgIndicator.visibility = View.GONE
+                            dialogView.deleteIncome.isEnabled = true
+                            dialogView.saveIncome.isEnabled = true
+                        }
+                        is Resource.Loading -> {
+                            dialogView.prgIndicator.visibility = View.VISIBLE
+                            dialogView.deleteIncome.isEnabled = false
+                            dialogView.saveIncome.isEnabled = false
+                        }
                     }
                 }
             }
         }
-
-        tvDate.setOnClickListener {
-            // Use the date from the TextView
-            val date: LocalDate = try {
-                LocalDate.parse(tvDate.text.toString())
-            } catch (ex: DateTimeParseException) {
-                LocalDate.now()
-            }
-
-            val cYear = date.year
-            val cMonth = date.monthValue - 1
-            val cDay = date.dayOfMonth
-
-            // date picker dialog
-            datePickerDialog = DatePickerDialog(
-                _context,
-                DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-                    // set day of month , month and year value in the edit text
-                    dateSelected = LocalDate.of(year, month + 1, dayOfMonth)
-                    tvDate.setText(dateSelected.format(dateFormatter))
-                }, cYear, cMonth, cDay
-            )
-            datePickerDialog.show()
-        }
     }
 
-    private fun validateInputs() {
-        // Reset errors.
-        tvDate.error = null
-        tvAmount.error = null
-
-        // Store values.
-        val date = tvDate.text.toString()
-        val salary = tvAmount.text.toString()
-
-        var cancel = false
-        var focusView: View? = null
-
-        // Check for a valid date.
-        if (date.isEmpty()) {
-            tvDate.error = _context.getString(R.string.error_field_required)
-            focusView = tvDate
-            cancel = true
-        }
-
-        // Check for a valid salary.
-        if (salary.isEmpty()) {
-            tvAmount.error = _context.getString(R.string.error_field_required)
-            focusView = tvAmount
-            cancel = true
-        }
-
-        if (cancel) {
-            // There was an error; don't attempt to store data and focus the first
-            // form field with an error.
-            focusView!!.requestFocus()
-        } else {
-            saveIncome()
+    private fun deleteIncome() {
+        income?.let {
+            viewModel.removeIncome(it).observe(viewLifecycleOwner) { resource ->
+                if (resource != null) {
+                    when (resource) {
+                        is Resource.Success -> {
+                            dismiss()
+                            dialogView.prgIndicator.visibility = View.GONE
+                            dialogView.deleteIncome.isEnabled = true
+                            dialogView.saveIncome.isEnabled = true
+                        }
+                        is Resource.Error -> {
+                            Toast.makeText(
+                                    requireContext(),
+                                    resource.message,
+                                    Toast.LENGTH_LONG
+                            ).show()
+                            dialogView.prgIndicator.visibility = View.GONE
+                            dialogView.deleteIncome.isEnabled = true
+                            dialogView.saveIncome.isEnabled = true
+                        }
+                        is Resource.Loading -> {
+                            dialogView.prgIndicator.visibility = View.VISIBLE
+                            dialogView.deleteIncome.isEnabled = false
+                            dialogView.saveIncome.isEnabled = false
+                        }
+                    }
+                }
+            }
         }
     }
 
     private fun saveIncome() {
-        prgIndicator.visibility = View.VISIBLE
-        btnSave.isEnabled = false
-
-        val data = IncomeRequest(
-            dateSelected.toString(),
-            tvAmount.text.toString(),
-            tvComment.text.toString()
+        val newIncome = Income(
+                null,
+                dateSelected.format(sqlDateFormatter),
+                dialogView.incomeAmount.text.toString().toFloat(),
+                dialogView.incomeComment.text.toString()
         )
 
-        income?.let {
-            // Check if we change something in the object
-            if (it.date == dateSelected.toString() && it.amount == tvAmount.text.toString().toFloat() && it.comment == tvComment.text.toString()) {
-                this@IncomeDialog.hide()
-                return
-            }
-
-            // Update income
-            scope.launch {
-                try {
-                    val response = repository.updateIncome(it.id!!, data)
-                    var index = incomeList.indexOfFirst { (id) -> id == response.data.id }
-                    incomeList[index] = response.data
-                    if (isFiltersSet) {
-                        index =
-                            unfilteredIncomeList.indexOfFirst { (id) -> id == response.data.id }
-                        unfilteredIncomeList[index] = response.data
+        viewModel.addIncome(newIncome).observe(viewLifecycleOwner) { resource ->
+            if (resource != null) {
+                when (resource) {
+                    is Resource.Success -> {
+                        dismiss()
+                        dialogView.prgIndicator.visibility = View.GONE
+                        dialogView.deleteIncome.isEnabled = true
+                        dialogView.saveIncome.isEnabled = true
                     }
-                    listener.refreshView()
-                    this@IncomeDialog.hide()
-                } catch (ex: HttpException) {
-                    Toast.makeText(
-                        _context,
-                        "Error updating income.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    prgIndicator.visibility = View.GONE
-                    btnSave.isEnabled = true
-                }
-            }
-        } ?: kotlin.run {
-            // Save income
-            scope.launch {
-                try {
-                    val response = repository.createNewIncome(data)
-                    incomeList.add(response.data)
-                    if (isFiltersSet) {
-                        unfilteredIncomeList.add(response.data)
+                    is Resource.Error -> {
+                        Toast.makeText(
+                                requireContext(),
+                                resource.message,
+                                Toast.LENGTH_LONG
+                        ).show()
+                        dialogView.prgIndicator.visibility = View.GONE
+                        dialogView.deleteIncome.isEnabled = true
+                        dialogView.saveIncome.isEnabled = true
                     }
-                    listener.refreshView()
-                    this@IncomeDialog.hide()
-                } catch (ex: HttpException) {
-                    Toast.makeText(
-                        _context,
-                        "Error creating new income.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    prgIndicator.visibility = View.GONE
-                    btnSave.isEnabled = true
+                    is Resource.Loading -> {
+                        dialogView.prgIndicator.visibility = View.VISIBLE
+                        dialogView.deleteIncome.isEnabled = false
+                        dialogView.saveIncome.isEnabled = false
+                    }
                 }
             }
         }
+    }
+
+    private fun validateForm() {
+        val incomeDate = dialogView.incomeDate
+        val incomeAmount = dialogView.incomeAmount
+        val saveIncome = dialogView.saveIncome
+        saveIncome.isEnabled = true
+        incomeDate.error = null
+        incomeAmount.error = null
+
+        // Store values.
+        val date = incomeDate.text.toString()
+        val salary = incomeAmount.text.toString()
+
+        // Check for a valid date.
+        if (date.isEmpty()) {
+            incomeDate.error = getString(R.string.error_field_required)
+            saveIncome.isEnabled = false
+        }
+
+        // Check for a valid salary.
+        if (salary.isEmpty()) {
+            incomeAmount.error = getString(R.string.error_field_required)
+            saveIncome.isEnabled = false
+        }
+    }
+
+    fun showForm(incItem: Income?) {
+        dialogView.prgIndicator.visibility = View.GONE
+        dialogView.saveIncome.isEnabled = true
+        dialogView.deleteIncome.isEnabled = true
+
+        dialogView.incomeDate.removeTextChangedListener(textWatcher)
+        dialogView.incomeDate.error = null
+
+        dialogView.incomeAmount.removeTextChangedListener(textWatcher)
+        dialogView.incomeAmount.error = null
+
+        dialogView.incomeComment.removeTextChangedListener(textWatcher)
+        dialogView.incomeComment.error = null
+
+        income = incItem
+        if (incItem == null) {
+            dialogView.incomeDate.addTextChangedListener(textWatcher)
+            dialogView.incomeDate.setText(dateSelected.toShowDateFormat(incomeDateFormatter))
+            dialogView.incomeAmount.addTextChangedListener(textWatcher)
+            dialogView.incomeAmount.setText("")
+            dialogView.incomeComment.addTextChangedListener(textWatcher)
+            dialogView.incomeComment.setText("")
+            dialogView.deleteIncome.visibility = View.GONE
+            dialogView.saveIncome.setText(R.string.save)
+        } else {
+            dateSelected = try {
+                LocalDate.parse(incItem.date)
+            } catch (ex: DateTimeParseException) {
+                LocalDate.now()
+            }
+            dialogView.incomeDate.setText(dateSelected.toShowDateFormat(incomeDateFormatter))
+            dialogView.incomeAmount.setText(incItem.amount.toString())
+            dialogView.incomeComment.setText(incItem.comment)
+            dialogView.deleteIncome.visibility = View.VISIBLE
+            dialogView.saveIncome.setText(R.string.update)
+            dialogView.incomeDate.addTextChangedListener(textWatcher)
+            dialogView.incomeAmount.addTextChangedListener(textWatcher)
+            dialogView.incomeComment.addTextChangedListener(textWatcher)
+        }
+    }
+
+    private fun isFormValid(): Boolean {
+        return dialogView.incomeDate.error == null && dialogView.incomeAmount.error == null
     }
 }

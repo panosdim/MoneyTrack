@@ -1,126 +1,91 @@
 package com.panosdim.moneytrack.fragments
 
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.panosdim.moneytrack.*
+import com.panosdim.moneytrack.R
 import com.panosdim.moneytrack.adapters.ExpensesAdapter
 import com.panosdim.moneytrack.dialogs.ExpenseDialog
+import com.panosdim.moneytrack.dialogs.ExpensesFilterDialog
+import com.panosdim.moneytrack.dialogs.ExpensesSortDialog
 import com.panosdim.moneytrack.model.Expense
-import com.panosdim.moneytrack.model.ExpensesFilters.filterExpenses
-import com.panosdim.moneytrack.model.ExpensesFilters.isFiltersSet
-import com.panosdim.moneytrack.model.ExpensesSort
-import com.panosdim.moneytrack.model.RefreshView
-import com.panosdim.moneytrack.utils.loginWithStoredCredentials
+import com.panosdim.moneytrack.viewmodel.ExpensesViewModel
+import kotlinx.android.synthetic.main.fragment_expenses.*
 import kotlinx.android.synthetic.main.fragment_expenses.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
-class ExpensesFragment : Fragment(), RefreshView {
-
+class ExpensesFragment : Fragment() {
     private lateinit var expensesView: View
-    private val expenseViewAdapter =
-        ExpensesAdapter(expensesList) { expItem: Expense -> expenseItemClicked(expItem) }
+    private val expensesViewAdapter =
+            ExpensesAdapter(mutableListOf(), mutableListOf()) { expenseItem: Expense ->
+                expenseItemClicked(expenseItem)
+            }
+    private val expenseDialog: ExpenseDialog = ExpenseDialog()
+    private val expensesSortDialog: ExpensesSortDialog = ExpensesSortDialog()
+    private val expensesFilterDialog: ExpensesFilterDialog = ExpensesFilterDialog()
+    private val viewModel: ExpensesViewModel by viewModels(ownerProducer = { this })
+
+    private fun expenseItemClicked(expItem: Expense) {
+        expenseDialog.showNow(childFragmentManager, "ExpenseDialog")
+        expenseDialog.showForm(expItem)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.expenses.observe(viewLifecycleOwner) { list ->
+            rvExpenses.adapter =
+                    viewModel.categories.value?.let {
+                        ExpensesAdapter(list, it) { expenseItem: Expense ->
+                            expenseItemClicked(expenseItem)
+                        }
+                    }
+            rvExpenses.adapter?.let {
+                (rvExpenses.adapter as ExpensesAdapter).notifyDataSetChanged()
+            }
+        }
+
+        viewModel.categories.observe(viewLifecycleOwner) { list ->
+            rvExpenses.adapter =
+                    viewModel.expenses.value?.let {
+                        ExpensesAdapter(it, list) { expenseItem: Expense ->
+                            expenseItemClicked(expenseItem)
+                        }
+                    }
+            rvExpenses.adapter?.let {
+                (rvExpenses.adapter as ExpensesAdapter).notifyDataSetChanged()
+            }
+        }
+    }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         expensesView = inflater.inflate(R.layout.fragment_expenses, container, false)
 
         val expensesRV = expensesView.rvExpenses
         expensesRV.setHasFixedSize(true)
         expensesRV.layoutManager = LinearLayoutManager(expensesView.context)
-        expensesRV.addItemDecoration(
-            DividerItemDecoration(
-                expensesRV.context,
-                DividerItemDecoration.VERTICAL
-            )
-        )
+        expensesRV.adapter = expensesViewAdapter
 
-        expensesView.rgExpField.setOnCheckedChangeListener { _, checkedRadioButtonId ->
-            when (checkedRadioButtonId) {
-                R.id.rbExpDate -> ExpensesSort.field = SortField.DATE
-                R.id.rbAmount -> ExpensesSort.field = SortField.AMOUNT
-                R.id.rbCategory -> ExpensesSort.field = SortField.CATEGORY
-                R.id.rbExpComment -> ExpensesSort.field = SortField.COMMENT
-            }
-            ExpensesSort.sort()
-            expenseViewAdapter.notifyDataSetChanged()
+        expensesView.addNewExpense.setOnClickListener {
+            expenseDialog.showNow(childFragmentManager, "ExpenseDialog")
+            expenseDialog.showForm(null)
         }
 
-        expensesView.rgExpDirection.setOnCheckedChangeListener { _, checkedRadioButtonId ->
-            when (checkedRadioButtonId) {
-                R.id.rbExpAscending -> ExpensesSort.direction = SortDirection.ASC
-                R.id.rbExpDescending -> ExpensesSort.direction = SortDirection.DESC
-            }
-            ExpensesSort.sort()
-            expenseViewAdapter.notifyDataSetChanged()
+        expensesView.filterExpenses.setOnClickListener {
+            expensesFilterDialog.showNow(childFragmentManager, "ExpensesFilterDialog")
         }
 
-        expensesRV.adapter = expenseViewAdapter
+        expensesView.sortExpenses.setOnClickListener {
+            expensesSortDialog.showNow(childFragmentManager, "ExpensesSortDialog")
+        }
 
         return expensesView
-    }
-
-    private fun expenseItemClicked(expItem: Expense) {
-        ExpenseDialog(requireContext(), this, expItem).show()
-    }
-
-    private suspend fun downloadExpensesAndCategories() {
-        val resp = repository.getAllCategories()
-        categoriesList.clear()
-        categoriesList.addAll(resp.data)
-        categoriesList.sortByDescending { it.count }
-
-        val response = repository.getAllExpenses()
-        expensesList.clear()
-        expensesList.addAll(response.data)
-        if (isFiltersSet) {
-            filterExpenses()
-        }
-        ExpensesSort.sort()
-        expenseViewAdapter.notifyDataSetChanged()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val scope = CoroutineScope(Dispatchers.Main)
-        scope.launch {
-            try {
-                downloadExpensesAndCategories()
-            } catch (e: HttpException) {
-                loginWithStoredCredentials(requireContext(), ::downloadExpensesAndCategories)
-            } catch (t: SocketTimeoutException) {
-                Toast.makeText(requireContext(), "Connection timeout", Toast.LENGTH_LONG)
-                    .show()
-            } catch (d: UnknownHostException) {
-                Toast.makeText(
-                    requireContext(),
-                    "Unable to resolve host",
-                    Toast.LENGTH_LONG
-                )
-                    .show()
-            }
-        }
-    }
-
-    override fun refreshView() {
-        if (isFiltersSet) {
-            filterExpenses()
-        }
-        ExpensesSort.sort()
-        expenseViewAdapter.notifyDataSetChanged()
     }
 }

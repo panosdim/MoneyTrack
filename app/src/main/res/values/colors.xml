@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#0A80B2</color>
-    <color name="LightGrey">#D3D3D3</color>
-    <color name="WhiteSmoke">#F7F7F7</color>
+    <color name="primaryColor">#00b103</color>
+    <color name="primaryLightColor">#5be447</color>
+    <color name="primaryDarkColor">#008000</color>
+    <color name="secondaryColor">#1976d2</color>
+    <color name="secondaryLightColor">#63a4ff</color>
+    <color name="secondaryDarkColor">#004ba0</color>
+    <color name="primaryTextColor">#000000</color>
+    <color name="secondaryTextColor">#ffffff</color>
 </resources>

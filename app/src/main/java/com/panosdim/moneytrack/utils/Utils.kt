@@ -7,20 +7,19 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.PackageInfoCompat
-import com.panosdim.moneytrack.*
-import com.panosdim.moneytrack.activities.LoginActivity
-import com.panosdim.moneytrack.rest.requests.LoginRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.lifecycle.LiveData
+import com.panosdim.moneytrack.BACKEND_URL
+import com.panosdim.moneytrack.model.Category
 import org.json.JSONObject
-import retrofit2.HttpException
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.Normalizer
 import javax.net.ssl.HttpsURLConnection
 
@@ -28,31 +27,17 @@ import javax.net.ssl.HttpsURLConnection
 val REGEX_UNACCENT = "\\p{InCombiningDiacriticalMarks}+".toRegex()
 var refId: Long = -1
 
-suspend fun downloadData(context: Context) {
-    try {
-        val responseIncome = App.repository.getAllIncome()
-        incomeList.clear()
-        incomeList.addAll(responseIncome.data)
-
-        val responseExpenses = App.repository.getAllExpenses()
-        expensesList.clear()
-        expensesList.addAll(responseExpenses.data)
-
-        val responseCategories = App.repository.getAllCategories()
-        categoriesList.clear()
-        categoriesList.addAll(responseCategories.data)
-        categoriesList.sortByDescending { it.count }
-    } catch (e: HttpException) {
-        val intent = Intent(context, LoginActivity::class.java)
-        intent.flags =
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        context.startActivity(intent)
-    }
-}
-
 fun CharSequence.unaccent(): String {
     val temp = Normalizer.normalize(this, Normalizer.Form.NFD)
     return REGEX_UNACCENT.replace(temp, "")
+}
+
+fun moneyFormat(obj: Any): String {
+    val symbols = DecimalFormatSymbols()
+    symbols.groupingSeparator = '.'
+    symbols.decimalSeparator = ','
+    val moneyFormat = DecimalFormat("#,##0.00 €", symbols)
+    return moneyFormat.format(obj)
 }
 
 fun checkForNewVersion(context: Context) {
@@ -76,19 +61,19 @@ fun checkForNewVersion(context: Context) {
             response = conn.inputStream.bufferedReader().use(BufferedReader::readText)
             val version = JSONObject(response).getLong("versionCode")
             val appVersion = PackageInfoCompat.getLongVersionCode(
-                context.packageManager.getPackageInfo(
-                    context.packageName,
-                    0
-                )
+                    context.packageManager.getPackageInfo(
+                            context.packageName,
+                            0
+                    )
             )
             if (version > appVersion && ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
+                            context,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
             ) {
                 val versionName = JSONObject(response).getString("versionName")
                 downloadNewVersion(context, versionName)
@@ -102,45 +87,40 @@ fun checkForNewVersion(context: Context) {
 private fun downloadNewVersion(context: Context, version: String) {
     val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     val request =
-        DownloadManager.Request(Uri.parse(BACKEND_URL + "apk/app-release.apk"))
+            DownloadManager.Request(Uri.parse(BACKEND_URL + "apk/app-release.apk"))
     request.setDescription("Downloading new version of MoneyTrack.")
     request.setTitle("New MoneyTrack Version")
     request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
     request.setDestinationInExternalPublicDir(
-        Environment.DIRECTORY_DOWNLOADS,
-        "MoneyTrack-${version}.apk"
+            Environment.DIRECTORY_DOWNLOADS,
+            "MoneyTrack-${version}.apk"
     )
     refId = manager.enqueue(request)
 }
 
-suspend fun loginWithStoredCredentials(context: Context, task: suspend () -> Unit) {
-    if (prefs.email.isNotEmpty() and prefs.password.isNotEmpty()) {
-        val scope = CoroutineScope(Dispatchers.Main)
-
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    val response =
-                        repository.login(
-                            LoginRequest(
-                                prefs.email, prefs.password
-                            )
-                        )
-                    prefs.token = response.token
-                }
-
-                task()
-            } catch (e: HttpException) {
-                val intent = Intent(context, LoginActivity::class.java)
-                intent.flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent)
-            }
+fun generateTextWatcher(validateFunc: () -> Unit): TextWatcher {
+    return object : TextWatcher {
+        override fun afterTextChanged(editable: Editable?) {
+            validateFunc()
         }
-    } else {
-        val intent = Intent(context, LoginActivity::class.java)
-        intent.flags =
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        context.startActivity(intent)
+
+        override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+            // Not required
+        }
+
+        override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+            // Not required
+        }
     }
+}
+
+fun <T> startIntent(context: Context, cls: Class<T>) {
+    val intent = Intent(context, cls)
+    intent.flags =
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    context.startActivity(intent)
+}
+
+fun getCategoryName(id: Int, categories: LiveData<List<Category>>): String {
+    return categories.value?.find { it.id == id }?.category ?: ""
 }

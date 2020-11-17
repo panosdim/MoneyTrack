@@ -4,7 +4,6 @@ import android.text.InputFilter
 import android.text.Spanned
 import java.util.regex.Pattern
 
-
 class DecimalDigitsInputFilter(digitsBeforeZero: Int, digitsAfterZero: Int) : InputFilter {
 
     private var pattern =
@@ -21,5 +20,4 @@ class DecimalDigitsInputFilter(digitsBeforeZero: Int, digitsAfterZero: Int) : In
         val matcher = pattern.matcher(dest)
         return if (!matcher.matches()) "" else null
     }
-
 }
