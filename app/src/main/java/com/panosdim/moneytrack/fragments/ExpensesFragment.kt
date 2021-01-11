@@ -88,4 +88,9 @@ class ExpensesFragment : Fragment() {
 
         return expensesView
     }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.reloadExpenses()
+    }
 }
