@@ -35,6 +35,7 @@
     <string name="amount_range">Amount Range</string>
     <string name="date_filter">From %1$s To %2$s</string>
     <string name="expense">Expense</string>
-    <string name="savings_title">Year %1$s</string>
     <string name="savings_overview">Savings Overview</string>
+    <string name="month">Month</string>
+    <string name="year">Year</string>
 </resources>
