@@ -35,7 +35,7 @@ class ExpensesViewModel : ViewModel() {
             this.value = data
         }
     }
-    private var _expenses: LiveData<List<Expense>> = Transformations.switchMap(expensesRepository.get()) { data ->
+    private val _expenses: LiveData<List<Expense>> = Transformations.switchMap(expensesRepository.get()) { data ->
         MutableLiveData<List<Expense>>().apply {
             this.value = data
         }
@@ -139,14 +139,6 @@ class ExpensesViewModel : ViewModel() {
             var data = filter(it)
             data = sort(data)
             expenses.value = data
-        }
-    }
-
-    fun reloadExpenses() {
-        _expenses = Transformations.switchMap(expensesRepository.get()) { data ->
-            MutableLiveData<List<Expense>>().apply {
-                this.value = data
-            }
         }
     }
 }
