@@ -30,16 +30,18 @@ class ExpensesViewModel : ViewModel() {
     var filterComment: String? = null
     var filterCategory: List<Int>? = null
 
-    val categories: LiveData<List<Category>> = Transformations.switchMap(categoriesRepository.get()) { data ->
-        MutableLiveData<List<Category>>().apply {
-            this.value = data
+    val categories: LiveData<List<Category>> =
+        Transformations.switchMap(categoriesRepository.get()) { data ->
+            MutableLiveData<List<Category>>().apply {
+                this.value = data
+            }
         }
-    }
-    private val _expenses: LiveData<List<Expense>> = Transformations.switchMap(expensesRepository.get()) { data ->
-        MutableLiveData<List<Expense>>().apply {
-            this.value = data
+    private var _expenses: LiveData<List<Expense>> =
+        Transformations.switchMap(expensesRepository.get()) { data ->
+            MutableLiveData<List<Expense>>().apply {
+                this.value = data
+            }
         }
-    }
     val expenses = MediatorLiveData<List<Expense>>()
 
     init {
@@ -77,7 +79,12 @@ class ExpensesViewModel : ViewModel() {
 
             SortField.CATEGORY -> when (sortDirection) {
                 SortDirection.ASC -> data.sortBy { getCategoryName(it.category, categories) }
-                SortDirection.DESC -> data.sortByDescending { getCategoryName(it.category, categories) }
+                SortDirection.DESC -> data.sortByDescending {
+                    getCategoryName(
+                        it.category,
+                        categories
+                    )
+                }
             }
 
             SortField.COMMENT -> when (sortDirection) {
@@ -105,7 +112,7 @@ class ExpensesViewModel : ViewModel() {
                 val date = LocalDate.parse(it.date)
 
                 (date.isAfter(first) || date.isEqual(first)) && (date.isBefore(second) || date.isEqual(
-                        second
+                    second
                 ))
             }
         }
@@ -135,7 +142,13 @@ class ExpensesViewModel : ViewModel() {
     }
 
     fun refreshExpenses() {
-        _expenses.value?.let {
+        expenses.removeSource(_expenses)
+        _expenses = Transformations.switchMap(expensesRepository.get()) { data ->
+            MutableLiveData<List<Expense>>().apply {
+                this.value = data
+            }
+        }
+        expenses.addSource(_expenses) {
             var data = filter(it)
             data = sort(data)
             expenses.value = data

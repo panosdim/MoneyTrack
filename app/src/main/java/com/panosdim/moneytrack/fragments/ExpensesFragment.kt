@@ -20,9 +20,9 @@ import kotlinx.android.synthetic.main.fragment_expenses.view.*
 class ExpensesFragment : Fragment() {
     private lateinit var expensesView: View
     private val expensesViewAdapter =
-            ExpensesAdapter(mutableListOf(), mutableListOf()) { expenseItem: Expense ->
-                expenseItemClicked(expenseItem)
-            }
+        ExpensesAdapter(mutableListOf(), mutableListOf()) { expenseItem: Expense ->
+            expenseItemClicked(expenseItem)
+        }
     private val expenseDialog: ExpenseDialog = ExpenseDialog()
     private val expensesSortDialog: ExpensesSortDialog = ExpensesSortDialog()
     private val expensesFilterDialog: ExpensesFilterDialog = ExpensesFilterDialog()
@@ -38,11 +38,11 @@ class ExpensesFragment : Fragment() {
 
         viewModel.expenses.observe(viewLifecycleOwner) { list ->
             rvExpenses.adapter =
-                    viewModel.categories.value?.let {
-                        ExpensesAdapter(list, it) { expenseItem: Expense ->
-                            expenseItemClicked(expenseItem)
-                        }
+                viewModel.categories.value?.let {
+                    ExpensesAdapter(list, it) { expenseItem: Expense ->
+                        expenseItemClicked(expenseItem)
                     }
+                }
             rvExpenses.adapter?.let {
                 (rvExpenses.adapter as ExpensesAdapter).notifyDataSetChanged()
             }
@@ -50,22 +50,27 @@ class ExpensesFragment : Fragment() {
 
         viewModel.categories.observe(viewLifecycleOwner) { list ->
             rvExpenses.adapter =
-                    viewModel.expenses.value?.let {
-                        ExpensesAdapter(it, list) { expenseItem: Expense ->
-                            expenseItemClicked(expenseItem)
-                        }
+                viewModel.expenses.value?.let {
+                    ExpensesAdapter(it, list) { expenseItem: Expense ->
+                        expenseItemClicked(expenseItem)
                     }
+                }
             rvExpenses.adapter?.let {
                 (rvExpenses.adapter as ExpensesAdapter).notifyDataSetChanged()
             }
         }
+
+        expSwipeRefresh.setOnRefreshListener {
+            viewModel.refreshExpenses()
+            expSwipeRefresh.isRefreshing = false
+        }
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         expensesView = inflater.inflate(R.layout.fragment_expenses, container, false)
 
         val expensesRV = expensesView.rvExpenses

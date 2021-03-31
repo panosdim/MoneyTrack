@@ -24,11 +24,12 @@ class IncomeViewModel : ViewModel() {
     var filterAmount: List<Float>? = null
     var filterComment: String? = null
 
-    private val _income: LiveData<List<Income>> = Transformations.switchMap(incomeRepository.get()) { data ->
-        MutableLiveData<List<Income>>().apply {
-            this.value = data
+    private var _income: LiveData<List<Income>> =
+        Transformations.switchMap(incomeRepository.get()) { data ->
+            MutableLiveData<List<Income>>().apply {
+                this.value = data
+            }
         }
-    }
     val income = MediatorLiveData<List<Income>>()
 
     init {
@@ -87,7 +88,7 @@ class IncomeViewModel : ViewModel() {
             data.retainAll {
                 val date = LocalDate.parse(it.date)
                 (date.isAfter(first) || date.isEqual(first)) && (date.isBefore(second) || date.isEqual(
-                        second
+                    second
                 ))
             }
         }
@@ -110,7 +111,13 @@ class IncomeViewModel : ViewModel() {
     }
 
     fun refreshIncome() {
-        _income.value?.let {
+        income.removeSource(_income)
+        _income = Transformations.switchMap(incomeRepository.get()) { data ->
+            MutableLiveData<List<Income>>().apply {
+                this.value = data
+            }
+        }
+        income.addSource(_income) {
             var data = filter(it)
             data = sort(data)
             income.value = data

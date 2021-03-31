@@ -6,12 +6,19 @@
     android:layout_height="match_parent"
     tools:context=".fragments.ExpensesFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvExpenses"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/expSwipeRefresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="100dp"
-        android:clipToPadding="false" />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvExpenses"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="100dp"
+            android:clipToPadding="false" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"

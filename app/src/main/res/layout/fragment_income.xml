@@ -6,12 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".fragments.IncomeFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvIncome"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/incSwipeRefresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="100dp"
-        android:clipToPadding="false" />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvIncome"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="100dp"
+            android:clipToPadding="false" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"

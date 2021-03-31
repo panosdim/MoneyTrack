@@ -20,11 +20,11 @@ import kotlinx.android.synthetic.main.fragment_income.view.*
 class IncomeFragment : Fragment() {
     private lateinit var incomeView: View
     private val incomeViewAdapter =
-            IncomeAdapter(mutableListOf()) { incomeItem: Income ->
-                incomeItemClicked(
-                        incomeItem
-                )
-            }
+        IncomeAdapter(mutableListOf()) { incomeItem: Income ->
+            incomeItemClicked(
+                incomeItem
+            )
+        }
     private val incomeDialog: IncomeDialog = IncomeDialog()
     private val incomeSortDialog: IncomeSortDialog = IncomeSortDialog()
     private val incomeFilterDialog: IncomeFilterDialog = IncomeFilterDialog()
@@ -40,20 +40,25 @@ class IncomeFragment : Fragment() {
 
         viewModel.income.observe(viewLifecycleOwner) { list ->
             rvIncome.adapter =
-                    IncomeAdapter(list) { incomeItem: Income ->
-                        incomeItemClicked(
-                                incomeItem
-                        )
-                    }
+                IncomeAdapter(list) { incomeItem: Income ->
+                    incomeItemClicked(
+                        incomeItem
+                    )
+                }
             (rvIncome.adapter as IncomeAdapter).notifyDataSetChanged()
+        }
+
+        incSwipeRefresh.setOnRefreshListener {
+            viewModel.refreshIncome()
+            incSwipeRefresh.isRefreshing = false
         }
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         incomeView = inflater.inflate(R.layout.fragment_income, container, false)
 
         val incomeRV = incomeView.rvIncome

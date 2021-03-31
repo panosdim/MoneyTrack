@@ -23,11 +23,11 @@ import kotlinx.android.synthetic.main.fragment_categories.view.*
 
 class CategoriesFragment : Fragment() {
     private val categoriesViewAdapter =
-            CategoriesAdapter(mutableListOf()) { categoryItem: Category ->
-                categoryItemClicked(
-                        categoryItem
-                )
-            }
+        CategoriesAdapter(mutableListOf()) { categoryItem: Category ->
+            categoryItemClicked(
+                categoryItem
+            )
+        }
     private lateinit var dialog: BottomSheetDialog
     private lateinit var dialogView: View
     private var category: Category? = null
@@ -46,15 +46,20 @@ class CategoriesFragment : Fragment() {
             val data = list.toMutableList()
             data.sortByDescending { it.count }
             rvCategories.adapter =
-                    CategoriesAdapter(data) { categoryItem: Category -> categoryItemClicked(categoryItem) }
+                CategoriesAdapter(data) { categoryItem: Category -> categoryItemClicked(categoryItem) }
             (rvCategories.adapter as CategoriesAdapter).notifyDataSetChanged()
+        }
+
+        catSwipeRefresh.setOnRefreshListener {
+            viewModel.refreshCategories()
+            catSwipeRefresh.isRefreshing = false
         }
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         val root = inflater.inflate(R.layout.fragment_categories, container, false)
 
@@ -111,9 +116,9 @@ class CategoriesFragment : Fragment() {
                         }
                         is Resource.Error -> {
                             Toast.makeText(
-                                    requireContext(),
-                                    resource.message,
-                                    Toast.LENGTH_LONG
+                                requireContext(),
+                                resource.message,
+                                Toast.LENGTH_LONG
                             ).show()
                             dialogView.prgIndicator.visibility = View.GONE
                             dialogView.deleteCategory.isEnabled = true
@@ -132,9 +137,9 @@ class CategoriesFragment : Fragment() {
 
     private fun saveCategory() {
         val newCategory = Category(
-                null,
-                dialogView.categoryName.text.toString(),
-                0
+            null,
+            dialogView.categoryName.text.toString(),
+            0
         )
 
         viewModel.addCategory(newCategory).observe(viewLifecycleOwner) { resource ->
@@ -148,9 +153,9 @@ class CategoriesFragment : Fragment() {
                     }
                     is Resource.Error -> {
                         Toast.makeText(
-                                requireContext(),
-                                resource.message,
-                                Toast.LENGTH_LONG
+                            requireContext(),
+                            resource.message,
+                            Toast.LENGTH_LONG
                         ).show()
                         dialogView.prgIndicator.visibility = View.GONE
                         dialogView.deleteCategory.isEnabled = true
@@ -185,9 +190,9 @@ class CategoriesFragment : Fragment() {
                         }
                         is Resource.Error -> {
                             Toast.makeText(
-                                    requireContext(),
-                                    resource.message,
-                                    Toast.LENGTH_LONG
+                                requireContext(),
+                                resource.message,
+                                Toast.LENGTH_LONG
                             ).show()
                             dialogView.prgIndicator.visibility = View.GONE
                             dialogView.deleteCategory.isEnabled = true
@@ -246,21 +251,21 @@ class CategoriesFragment : Fragment() {
         // Check if existing category has the same name
         category?.let {
             if (catName != category!!.category && viewModel.categories.value?.find {
-                        it.category.equals(
-                                catName,
-                                true
-                        )
-                    } != null) {
+                    it.category.equals(
+                        catName,
+                        true
+                    )
+                } != null) {
                 categoryName.error = getString(R.string.error_same_name_conflict)
                 saveCategory.isEnabled = false
             }
         } ?: kotlin.run {
             if (viewModel.categories.value?.find {
-                        it.category.equals(
-                                catName,
-                                true
-                        )
-                    } != null) {
+                    it.category.equals(
+                        catName,
+                        true
+                    )
+                } != null) {
                 categoryName.error = getString(R.string.error_same_name_conflict)
                 saveCategory.isEnabled = false
             }

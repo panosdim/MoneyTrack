@@ -83,15 +83,15 @@ class CategoriesRepository {
                 result.postValue(Resource.Error("Error saving category."))
             } catch (t: SocketTimeoutException) {
                 result.postValue(
-                        Resource.Error(
-                                App.instance.getString(R.string.connection_timeout)
-                        )
+                    Resource.Error(
+                        App.instance.getString(R.string.connection_timeout)
+                    )
                 )
             } catch (d: UnknownHostException) {
                 result.postValue(
-                        Resource.Error(
-                                App.instance.getString(R.string.unknown_host)
-                        )
+                    Resource.Error(
+                        App.instance.getString(R.string.unknown_host)
+                    )
                 )
             }
         }
@@ -114,15 +114,15 @@ class CategoriesRepository {
                 result.postValue(Resource.Error("Error updating category."))
             } catch (t: SocketTimeoutException) {
                 result.postValue(
-                        Resource.Error(
-                                App.instance.getString(R.string.connection_timeout)
-                        )
+                    Resource.Error(
+                        App.instance.getString(R.string.connection_timeout)
+                    )
                 )
             } catch (d: UnknownHostException) {
                 result.postValue(
-                        Resource.Error(
-                                App.instance.getString(R.string.unknown_host)
-                        )
+                    Resource.Error(
+                        App.instance.getString(R.string.unknown_host)
+                    )
                 )
             }
         }

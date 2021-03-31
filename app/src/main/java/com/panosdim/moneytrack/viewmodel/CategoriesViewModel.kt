@@ -9,7 +9,7 @@ import com.panosdim.moneytrack.model.Category
 class CategoriesViewModel : ViewModel() {
 
     private val categoriesRepository = CategoriesRepository()
-    val categories: LiveData<List<Category>> = categoriesRepository.get()
+    var categories: LiveData<List<Category>> = categoriesRepository.get()
 
     fun removeCategory(category: Category): LiveData<Resource<Category>> {
         return categoriesRepository.delete(category)
@@ -21,5 +21,9 @@ class CategoriesViewModel : ViewModel() {
 
     fun updateCategory(category: Category): LiveData<Resource<Category>> {
         return categoriesRepository.update(category)
+    }
+
+    fun refreshCategories() {
+        categories = categoriesRepository.get()
     }
 }

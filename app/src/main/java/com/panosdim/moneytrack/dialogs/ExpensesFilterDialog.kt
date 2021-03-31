@@ -27,9 +27,9 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
     private val rangeDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         dialogView = inflater.inflate(R.layout.dialog_expenses_filter, container, false)
 
         dialogView.expensesFilterAmount.setLabelFormatter { value: Float ->
@@ -54,7 +54,7 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
             } else {
                 viewModel.filterCategory = null
             }
-            
+
             viewModel.refreshExpenses()
             dismiss()
         }
@@ -76,7 +76,13 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
                 rangeDateSelected?.let {
                     val startDate = fromEpochMilli(it.first!!).toShowDateFormat(rangeDateFormatter)
                     val endDate = fromEpochMilli(it.second!!).toShowDateFormat(rangeDateFormatter)
-                    dialogView.expensesFilterDate.setText(requireContext().getString(R.string.date_filter, startDate, endDate))
+                    dialogView.expensesFilterDate.setText(
+                        requireContext().getString(
+                            R.string.date_filter,
+                            startDate,
+                            endDate
+                        )
+                    )
                 }
             }
 
@@ -93,7 +99,11 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
 
         viewModel.categories.observe(viewLifecycleOwner) { list ->
             list.sortedByDescending { it.count }.forEach { category ->
-                val chip = layoutInflater.inflate(R.layout.row_chip_view, requireView().parent.parent as ViewGroup, false) as Chip
+                val chip = layoutInflater.inflate(
+                    R.layout.row_chip_view,
+                    requireView().parent.parent as ViewGroup,
+                    false
+                ) as Chip
                 chip.text = category.category
                 chip.id = category.id!!
                 viewModel.filterCategory?.let {
@@ -105,6 +115,7 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
 
         dialogView.clearExpensesFilters.setOnClickListener {
             viewModel.clearFilters()
+
             viewModel.expenses.value?.let { list ->
                 val min = list.minByOrNull { it.amount }
                 val max = list.maxByOrNull { it.amount }
@@ -136,7 +147,13 @@ class ExpensesFilterDialog : BottomSheetDialogFragment() {
         viewModel.filterDate?.let {
             val startDate = it.first.toShowDateFormat(rangeDateFormatter)
             val endDate = it.second.toShowDateFormat(rangeDateFormatter)
-            dialogView.expensesFilterDate.setText(requireContext().getString(R.string.date_filter, startDate, endDate))
+            dialogView.expensesFilterDate.setText(
+                requireContext().getString(
+                    R.string.date_filter,
+                    startDate,
+                    endDate
+                )
+            )
         } ?: kotlin.run {
             rangeDateSelected = null
             dialogView.expensesFilterDate.setText("")

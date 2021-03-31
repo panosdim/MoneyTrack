@@ -9,7 +9,7 @@ import com.panosdim.moneytrack.model.Category
 import com.panosdim.moneytrack.model.Expense
 import com.panosdim.moneytrack.model.Income
 
-@Database(entities = [Category::class, Income::class, Expense::class], version = 1)
+@Database(entities = [Category::class, Income::class, Expense::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun incomeDao(): IncomeDao
